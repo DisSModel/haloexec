@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "haloexec"
+version = "0.1.0"
+description = "Motor genérico de execução de Autômatos Celulares por decomposição de domínio (blocos+halo)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "dissmodel>=0.6.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+# Opcional: só necessário para rodar tests/test_flood_model_equivalence.py,
+# que valida haloexec contra o FloodModel real do BR-MANGUE.
+brmangue = ["brmangue-dissmodel @ git+https://github.com/DisSModel/brmangue-dissmodel.git"]
+# Opcional: só necessário para geotiff_io.py (carregamento de GeoTIFF/VRT
+# direto para MemmapRasterWorkspace, bloco a bloco).
+geotiff = ["rasterio>=1.3"]
+# Opcional: só necessário para zarr_io.py (carregamento de Zarr direto
+# para MemmapRasterWorkspace — segunda opção de entrada, pensada para
+# consumir DerivedVariable do disscube).
+zarr = ["zarr>=2.16"]
+# Opcional: só necessário para tests/test_geomosaic_integration.py, que
+# prova que load_geotiff_into_workspace lê corretamente um mosaico
+# produzido pelo geomosaic (pacote separado, sem relação de runtime
+# com haloexec — só usado aqui como prova de integração em teste).
+geomosaic = ["geomosaic @ git+https://github.com/LambdaGeo/geomosaic.git"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
