@@ -455,6 +455,30 @@ ingenuamente sobre um memmap, materializaria a grade inteira em RAM.
 importa nem modifica o `dissmodel` instalado), copiando bloco a bloco.
 Isso é o trecho a reconciliar quando este pacote migrar para o core.
 
+## Achado: ordem de eixos em Zarr não é garantida (y, x)
+
+Ao investigar a integração com `disscube` de verdade (não só sintética),
+achei que `CubeClient.load()`/`to_lucc_data()` fazem
+`.transpose("y", "x")` **defensivamente** antes de usar qualquer array
+— evidência de que a ordem de eixos gravada em disco não é garantida.
+Reproduzi com `xarray` real, gravando exatamente como
+`VariableWriter` do disscube grava (`da.to_dataset(...).to_zarr(...)`):
+um array **quadrado** com eixos `(x, y)` em vez de `(y, x)` tem o
+**mesmo shape** nos dois casos — a checagem de shape do `zarr_io.py`
+não detectava a inversão. Sem correção, isso corrompia linha/coluna
+**silenciosamente**, sem erro nenhum.
+
+**Fix:** Zarr v3 grava a ordem real de eixos num campo nativo do
+formato (`arr.metadata.dimension_names`, não `attrs` — diferente da
+convenção antiga do Zarr v2/xarray, `_ARRAY_DIMENSIONS`).
+`load_zarr_into_workspace` agora lê esse metadado e normaliza a leitura
+de cada bloco pra `(y, x)`/`(time, y, x)` independente da ordem física
+em disco. Testado com os três casos reais (`y,x` correto, `x,y`
+invertido em array quadrado, `x,y,time` invertido com dimensão
+temporal) em `tests/test_zarr_axis_order_regression.py`, usando
+`xarray` de verdade pra gravar — não `zarr` puro — pra reproduzir
+exatamente o que o `disscube` produz.
+
 ## Testando com arquivos grandes
 
 `scripts/generate_and_benchmark.py` gera dados sintéticos **direto em

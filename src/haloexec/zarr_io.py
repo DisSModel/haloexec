@@ -40,6 +40,33 @@ except ImportError:
 from .disk_backend import MemmapRasterWorkspace
 
 
+def _resolve_axis_order(arr, expected_names: tuple[str, ...]) -> tuple[int, ...] | None:
+    """Usa arr.metadata.dimension_names (campo nativo do Zarr v3, o
+    mesmo que xarray grava ao salvar um DataArray via to_zarr) para
+    determinar a ordem real dos eixos no array em disco, e devolve os
+    índices de transposição necessários para chegar em expected_names.
+
+    Por que isso é necessário: xarray/disscube NÃO garantem que a
+    ordem de eixos gravada em disco seja (y, x) — o próprio
+    CubeClient.load() do disscube faz `.transpose("y", "x")`
+    defensivamente antes de usar qualquer array, precisamente porque
+    a ordem pode vir diferente. Um array QUADRADO com eixos trocados
+    tem o MESMO shape nos dois casos — a checagem de shape sozinha
+    não detecta a troca; é silenciosa, não trava.
+
+    Retorna None se dimension_names não estiver disponível (Zarr sem
+    metadado de dimensão — não há como verificar, assume-se a ordem
+    como está, mesmo comportamento de antes desta correção).
+    """
+    dims = getattr(getattr(arr, "metadata", None), "dimension_names", None)
+    if not dims:
+        return None
+    dims = tuple(dims)
+    if set(dims) != set(expected_names):
+        return None  # nomes de dimensão inesperados -- não arrisca reordenar
+    return tuple(dims.index(name) for name in expected_names)
+
+
 def _open_variable(store: str, variable_name: str | None):
     """Abre um zarr store, que pode ser um grupo (com várias variáveis,
     acessadas por nome) ou um array único (variável direta)."""
@@ -107,13 +134,26 @@ def load_zarr_into_workspace(
                     f"Variável '{zarr_var_name}' tem 3 dimensões (provável "
                     f"dimensão temporal) — informe time_index."
                 )
-            shape2d = arr.shape[1:]
+            expected_dims = ("time", "y", "x")
         elif arr.ndim == 2:
-            shape2d = arr.shape
+            expected_dims = ("y", "x")
         else:
             raise ValueError(
                 f"Variável '{zarr_var_name}' tem {arr.ndim} dimensões; esperado 2 ou 3."
             )
+
+        # Normaliza a ordem de eixos para (y, x) ou (time, y, x) usando
+        # o metadado nativo de dimensão do Zarr v3, quando disponível.
+        # Necessário porque a ordem de eixos gravada NÃO é garantida
+        # (ver docstring de _resolve_axis_order) — um array quadrado
+        # com eixos trocados tem o mesmo shape nos dois casos, então a
+        # checagem de shape sozinha não pega a inversão.
+        axis_order = _resolve_axis_order(arr, expected_dims)
+
+        shape2d = arr.shape[1:] if arr.ndim == 3 else arr.shape
+        if axis_order is not None:
+            reordered_shape = tuple(arr.shape[i] for i in axis_order)
+            shape2d = reordered_shape[1:] if arr.ndim == 3 else reordered_shape
 
         if shape2d != tuple(workspace.shape):
             raise ValueError(
@@ -122,10 +162,34 @@ def load_zarr_into_workspace(
             )
 
         for block in workspace.blocks():
-            if arr.ndim == 3:
-                data = arr[time_index, block.r0:block.r1, block.c0:block.c1]
+            disk_index: list = [slice(None)] * arr.ndim
+            y_disk_axis = x_disk_axis = None
+            time_disk_axis = None
+
+            for canonical_pos, name in enumerate(expected_dims):
+                disk_axis = axis_order[canonical_pos] if axis_order is not None else canonical_pos
+                if name == "time":
+                    disk_index[disk_axis] = time_index
+                    time_disk_axis = disk_axis
+                elif name == "y":
+                    disk_index[disk_axis] = slice(block.r0, block.r1)
+                    y_disk_axis = disk_axis
+                elif name == "x":
+                    disk_index[disk_axis] = slice(block.c0, block.c1)
+                    x_disk_axis = disk_axis
+
+            raw = np.asarray(arr[tuple(disk_index)])
+
+            if axis_order is not None and raw.ndim == 2:
+                # raw ainda está na ordem relativa em disco (menos o
+                # eixo de tempo, já reduzido pela indexação inteira
+                # acima) -- transpõe para (y, x) canônico.
+                def _shift(pos):
+                    return pos - 1 if (time_disk_axis is not None and time_disk_axis < pos) else pos
+                data = np.transpose(raw, (_shift(y_disk_axis), _shift(x_disk_axis)))
             else:
-                data = arr[block.r0:block.r1, block.c0:block.c1]
-            workspace.write_block_to_read_slot(block, array_name, np.asarray(data))
+                data = raw
+
+            workspace.write_block_to_read_slot(block, array_name, data)
 
     workspace.flush()
