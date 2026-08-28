@@ -455,6 +455,55 @@ ingenuamente sobre um memmap, materializaria a grade inteira em RAM.
 importa nem modifica o `dissmodel` instalado), copiando bloco a bloco.
 Isso é o trecho a reconciliar quando este pacote migrar para o core.
 
+## Esparsidade e custo de disco (memmap resolve RAM, não disco)
+
+Vale separar dois custos que se confundem com facilidade:
+
+- **RAM** — resolvido pelo `np.memmap`: o kernel traz páginas sob demanda,
+  então percorrer a grade inteira nunca a materializa de uma vez. Medido
+  com dado real (grade de 371 M células, dois arrays `float32`): pico de
+  3,0 GB de RSS para um workspace de 5,6 GB.
+- **Disco** — o memmap não ajuda, e nem deveria: arquivo é arquivo.
+
+Para o disco, `create()` dimensiona os `.dat` **sem pré-escrever zeros**,
+então eles nascem esparsos: só o que for escrito ocupa blocos. Ler região
+nunca escrita continua devolvendo zero — garantia do POSIX, idêntica ao
+que a pré-escrita dava, então a semântica não mudou (ver
+`tests/test_disk_backend_sparse.py`, que fixa as duas metades). Medido:
+um array de 4000×4000 `float64` sai de 122 MB reais para 0 MB até que
+algo seja escrito.
+
+**O limite dessa economia**, e por que ela não é automática: ela só
+aparece se quem carrega *deixar blocos sem escrever*. Um carregador que
+preenche todo bloco — inclusive os vazios, com um sentinela como `NaN` —
+torna o arquivo denso de novo. E deixar de escrever significa que aquela
+região vale **zero**, não "ausente". Para domínios em que `0` é válido
+(um código de classe, uma elevação ao nível do mar) os dois casos ficam
+indistinguíveis.
+
+Caso real que expôs isso: um domínio costeiro em malha BDC, 15 tiles com
+dado dentro de um retângulo de 5×6 posições. Metade das posições nunca
+teve tile, e os tiles que têm dado são parcialmente vazios por dentro
+(a faixa de mangue é estreita). Resultado: 5,6 GB alocados para ~2,8 GB
+de dado útil, e a proporção piora conforme o domínio cresce.
+
+**Próximo passo proposto (não implementado):** distinguir "ausente" de
+"zero válido" precisa de um canal a mais, que este formato não tem hoje.
+O desenho natural copia o que o GeoTIFF já faz:
+
+| | GeoTIFF | equivalente aqui |
+|---|---|---|
+| "este bloco não existe" | `TileOffsets[i] == 0` | índice de blocos presentes |
+| "esta célula é inválida" | valor `nodata` da banda | `nodata` por array no `metadata.json` |
+
+O custo é baixo — um workspace típico tem ~1500 blocos, então o índice é
+da ordem de 1500 bits, contra os ~371 MB que uma máscara por célula
+custaria. `read_block_*` de um bloco ausente devolveria o `nodata`
+declarado sem tocar o disco. O ponto de atenção é `disk_sync_model.py`,
+que hoje escreve todo bloco incondicionalmente em `write_block_core` — a
+mudança precisaria decidir se um bloco totalmente nodata deve ou não
+voltar a ser gravado.
+
 ## Achado: ordem de eixos em Zarr não é garantida (y, x)
 
 Ao investigar a integração com `disscube` de verdade (não só sintética),
