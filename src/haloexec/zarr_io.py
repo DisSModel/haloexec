@@ -267,6 +267,22 @@ def load_zarr_tiles_into_workspace(
                 f"cada tile precisa de {sorted(obrigatorias)}."
             )
 
+    # Dois pedaços na mesma posição não é ambiguidade a resolver por ordem:
+    # um sobrescreveria o outro em silêncio. Acontece de verdade quando o
+    # layout mistura fatias temporais da mesma variável — cada ano repete as
+    # mesmas posições.
+    ocupadas: dict[tuple[int, int], str] = {}
+    for t in tiles:
+        chave = (t["row_off"], t["col_off"])
+        if chave in ocupadas:
+            raise ValueError(
+                f"Dois tiles ocupam a posição ({chave[0]}, {chave[1]}): "
+                f"{ocupadas[chave]!r} e {t.get('tile_id')!r}. Um sobrescreveria "
+                f"o outro. Se o layout mistura fatias temporais, escolha uma "
+                f"antes de carregar."
+            )
+        ocupadas[chave] = t.get("tile_id")
+
     array_name = array or tiles[0]["variable"]
     declarados = set(workspace.metadata["arrays"])
     if array_name not in declarados:

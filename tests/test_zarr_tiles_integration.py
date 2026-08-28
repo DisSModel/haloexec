@@ -258,3 +258,40 @@ def test_layout_shape_matches_disscube(tmp_path):
 
     exigidas = {"url", "variable", "row_off", "col_off", "height", "width"}
     assert exigidas <= set(cube.tile_layout("v", "G")[0])
+
+
+# ── posições sobrepostas ─────────────────────────────────────────────────────
+# Defesa em profundidade: mesmo que o layout venha errado de qualquer origem,
+# dois pedaços na mesma posição não devem ser aceitos. O caso real que motivou
+# isto: uma variável temporal cujo layout misturava as fatias de vários anos,
+# todas nas mesmas posições — carregar isso deixaria o último ano vencer, sem
+# erro nenhum.
+
+def test_two_tiles_at_the_same_position_raise(tmp_path):
+    ws = _ws(tmp_path, (T, T))
+    a = _write_tile(tmp_path / "a.zarr", np.ones((T, T)))
+    b = _write_tile(tmp_path / "b.zarr", np.full((T, T), 2.0))
+    base = {"variable": "v", "row_off": 0, "col_off": 0, "height": T, "width": T}
+    with pytest.raises(ValueError, match="ocupam a posição"):
+        load_zarr_tiles_into_workspace(ws, [
+            {**base, "tile_id": "1985", "url": a},
+            {**base, "tile_id": "1995", "url": b},
+        ])
+
+
+def test_overlap_error_names_both_tiles(tmp_path):
+    ws = _ws(tmp_path, (T, T))
+    a = _write_tile(tmp_path / "a.zarr", np.ones((T, T)))
+    base = {"variable": "v", "row_off": 0, "col_off": 0, "height": T, "width": T}
+    with pytest.raises(ValueError) as exc:
+        load_zarr_tiles_into_workspace(ws, [
+            {**base, "tile_id": "primeiro", "url": a},
+            {**base, "tile_id": "segundo", "url": a},
+        ])
+    assert "primeiro" in str(exc.value) and "segundo" in str(exc.value)
+
+
+def test_distinct_positions_still_accepted(tmp_path):
+    """Guarda: a checagem não pode recusar um mosaico legítimo."""
+    ws = _ws(tmp_path, (2 * T, 2 * T))
+    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, 3.0, 4.0)))
