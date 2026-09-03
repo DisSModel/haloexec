@@ -144,7 +144,7 @@ saltos, não 1: com `halo=1`, o `fluxo` calculado no próprio anel de
 halo já está errado (seus vizinhos de 2 saltos foram zero-padded pelo
 `shift2d` local), e esse erro contamina o núcleo do bloco.
 
-Os testes sintéticos anteriores (`test_flood_model_equivalence.py`)
+Os testes sintéticos anteriores (`examples/brmangue_validation/test_flood_model_equivalence.py`)
 não pegaram isso porque sempre colocavam a fonte de inundação (`MAR`)
 numa coluna inteira **na borda do domínio** — onde o artefato de
 zero-padding já existe igualmente nos dois lados (monolítico e halo).
@@ -159,7 +159,7 @@ confirmado nos próprios testes.
 configura o modelo, não algo que o motor possa inferir sozinho. O que
 mudou foi a documentação (`sync_model.py`) alertando explicitamente
 sobre dependências de 2+ saltos, e um teste de regressão
-(`tests/test_flood_model_halo_depth_regression.py`, usando uma fixture
+(`examples/brmangue_validation/test_flood_model_halo_depth_regression.py`, usando uma fixture
 recortada 30x30 do dataset real) que trava `halo=1` como insuficiente
 e `halo=2` como correto para este modelo especificamente.
 
@@ -282,7 +282,7 @@ dados de entrada — ou seja, é algo na mecânica do
 mesmo no caso degenerado sem chunking real, e só se manifesta com o
 dataset real grande/com máscara irregular — não aparece em nenhum
 teste sintético da suíte, incluindo o teste de combinação Flood+Mangrove
-em disco (`test_disk_combined_models_regression.py`), que não incluía
+em disco (`examples/brmangue_validation/test_disk_combined_models_regression.py`), que não incluía
 uma máscara irregular real.
 
 **Não travei isso em teste de regressão ainda** porque não sei
@@ -290,8 +290,8 @@ reproduzir a causa raiz de forma mínima — reproduzir exige o dataset
 real completo. Antes de confiar no caminho disco para os dois modelos
 combinados em produção, este problema precisa ser resolvido.
 Individualmente, cada modelo no caminho disco está validado (ver
-`test_disk_flood_model_equivalence.py`,
-`test_disk_mangrove_model_equivalence.py`) — a lacuna é especificamente
+`examples/brmangue_validation/test_disk_flood_model_equivalence.py`,
+`examples/brmangue_validation/test_disk_mangrove_model_equivalence.py`) — a lacuna é especificamente
 a combinação dos dois no dataset real.
 
 ## Testando contra o TerraME (dataset real)
@@ -363,6 +363,29 @@ várias fronteiras de bloco antes de convergir) + 5 seeds de estresse +
 caso de não-convergência (deve estourar `RuntimeError`, não travar
 silenciosamente). O protótipo original nunca teve essa prova.
 
+## Por que os testes do BR-MANGUE ficam em `examples/`, não em `tests/`
+
+`brmangue-dissmodel` é um repositório externo que pode mudar ou deixar
+de existir — os 6 arquivos de equivalência que dependem dele
+(`examples/brmangue_validation/test_*.py`) ficam fora de `tests/` de
+propósito, para não fazerem parte da suíte padrão (`pytest`, sem
+argumento, só olha `tests/` — configurado via `testpaths` no
+`pyproject.toml`). Continuam rodáveis explicitamente
+(`pytest examples/brmangue_validation/`), e continuam sendo testes de
+verdade (com `assert`), não só scripts — só não fazem parte do
+compromisso de manutenção contínua do `haloexec` em si.
+
+## Exemplos didáticos (`examples/`)
+
+- **`examples/gol_patterns/gol_patterns_haloexec.py`** — Game of Life
+  com padrões clássicos (glider, blinker, beacon, toad, block, pulsar)
+  posicionados deliberadamente sobre fronteiras de bloco, via
+  `dissmodel_ca` (`PATTERNS`) e `dissmodel.visualization.RasterMap`.
+  `tests/test_gol_patterns_example.py` prova a equivalência
+  monolítico-vs-blocos do mesmo cenário (achado no processo: as
+  coordenadas originais tinham `beacon` sobreposto ao `pulsar` —
+  `place()` sobrescreve silenciosamente, sem erro; corrigido).
+
 ## Testes de equivalência
 
 `tests/test_gameoflife_from_geotiff.py` fecha o ciclo mosaico→TIFF→disco→halo
@@ -380,7 +403,7 @@ reais do dissmodel (não um harness isolado), que o resultado de
 distintas (grade divisível exatamente, com resto, blocos de 1 linha,
 bloco maior que a grade, e stress com 5 seeds aleatórias).
 
-`tests/test_flood_model_equivalence.py` faz o mesmo com o `FloodModel`
+`examples/brmangue_validation/test_flood_model_equivalence.py` faz o mesmo com o `FloodModel`
 **real e inalterado** do
 [`brmangue-dissmodel`](https://github.com/DisSModel/brmangue-dissmodel),
 via `HaloChunkedSyncRasterModel` (herança múltipla cooperativa — nenhuma
@@ -388,7 +411,7 @@ linha do `FloodModel` é modificada). Requer o extra opcional `brmangue`:
 
 ```bash
 pip install -e ".[dev,brmangue]"
-pytest tests/test_flood_model_equivalence.py -v
+pytest examples/brmangue_validation/test_flood_model_equivalence.py -v
 ```
 
 **Escopo deste teste:** verifica apenas que rodar em blocos produz o
@@ -399,7 +422,7 @@ fora do escopo deste pacote). Equivalência bloco-vs-monolítico e
 correção científica são propriedades independentes.
 
 `tests/test_disk_backend_equivalence.py` e
-`tests/test_disk_flood_model_equivalence.py` fazem o mesmo teste, mas
+`examples/brmangue_validation/test_disk_flood_model_equivalence.py` fazem o mesmo teste, mas
 via `MemmapRasterWorkspace`/`DiskChunkedSyncRasterModel` — a grade
 nunca é materializada inteira em memória (leitura direta de blocos+halo
 do disco, com recorte nas bordas em vez de padding). O segundo é o
@@ -407,8 +430,8 @@ teste mais forte do pacote: `FloodModel` real rodando inteiramente por
 disco, com sincronização "_past" bloco a bloco, resultado idêntico ao
 monolítico.
 
-`tests/test_mangrove_model_equivalence.py` e
-`tests/test_disk_mangrove_model_equivalence.py` fazem o mesmo com
+`examples/brmangue_validation/test_mangrove_model_equivalence.py` e
+`examples/brmangue_validation/test_disk_mangrove_model_equivalence.py` fazem o mesmo com
 `MangroveModel` (RAM e disco respectivamente) — incluindo um caso com
 `acrecao_ativa=True` (exercita o ramo que lê `alt_past` e escreve
 `alt`, não coberto pelos casos default). Foi nesse teste que o bug de
@@ -454,6 +477,55 @@ ingenuamente sobre um memmap, materializaria a grade inteira em RAM.
 `DiskChunkedSyncRasterModel` replica essa lógica localmente (não
 importa nem modifica o `dissmodel` instalado), copiando bloco a bloco.
 Isso é o trecho a reconciliar quando este pacote migrar para o core.
+
+## Esparsidade e custo de disco (memmap resolve RAM, não disco)
+
+Vale separar dois custos que se confundem com facilidade:
+
+- **RAM** — resolvido pelo `np.memmap`: o kernel traz páginas sob demanda,
+  então percorrer a grade inteira nunca a materializa de uma vez. Medido
+  com dado real (grade de 371 M células, dois arrays `float32`): pico de
+  3,0 GB de RSS para um workspace de 5,6 GB.
+- **Disco** — o memmap não ajuda, e nem deveria: arquivo é arquivo.
+
+Para o disco, `create()` dimensiona os `.dat` **sem pré-escrever zeros**,
+então eles nascem esparsos: só o que for escrito ocupa blocos. Ler região
+nunca escrita continua devolvendo zero — garantia do POSIX, idêntica ao
+que a pré-escrita dava, então a semântica não mudou (ver
+`tests/test_disk_backend_sparse.py`, que fixa as duas metades). Medido:
+um array de 4000×4000 `float64` sai de 122 MB reais para 0 MB até que
+algo seja escrito.
+
+**O limite dessa economia**, e por que ela não é automática: ela só
+aparece se quem carrega *deixar blocos sem escrever*. Um carregador que
+preenche todo bloco — inclusive os vazios, com um sentinela como `NaN` —
+torna o arquivo denso de novo. E deixar de escrever significa que aquela
+região vale **zero**, não "ausente". Para domínios em que `0` é válido
+(um código de classe, uma elevação ao nível do mar) os dois casos ficam
+indistinguíveis.
+
+Caso real que expôs isso: um domínio costeiro em malha BDC, 15 tiles com
+dado dentro de um retângulo de 5×6 posições. Metade das posições nunca
+teve tile, e os tiles que têm dado são parcialmente vazios por dentro
+(a faixa de mangue é estreita). Resultado: 5,6 GB alocados para ~2,8 GB
+de dado útil, e a proporção piora conforme o domínio cresce.
+
+**Próximo passo proposto (não implementado):** distinguir "ausente" de
+"zero válido" precisa de um canal a mais, que este formato não tem hoje.
+O desenho natural copia o que o GeoTIFF já faz:
+
+| | GeoTIFF | equivalente aqui |
+|---|---|---|
+| "este bloco não existe" | `TileOffsets[i] == 0` | índice de blocos presentes |
+| "esta célula é inválida" | valor `nodata` da banda | `nodata` por array no `metadata.json` |
+
+O custo é baixo — um workspace típico tem ~1500 blocos, então o índice é
+da ordem de 1500 bits, contra os ~371 MB que uma máscara por célula
+custaria. `read_block_*` de um bloco ausente devolveria o `nodata`
+declarado sem tocar o disco. O ponto de atenção é `disk_sync_model.py`,
+que hoje escreve todo bloco incondicionalmente em `write_block_core` — a
+mudança precisaria decidir se um bloco totalmente nodata deve ou não
+voltar a ser gravado.
 
 ## Achado: ordem de eixos em Zarr não é garantida (y, x)
 

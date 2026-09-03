@@ -40,7 +40,7 @@ import numpy as np
 
 from dissmodel.geo.raster.backend import RasterBackend
 
-from .engine import make_blocks, resolve_boundary_value
+from ..engine import make_blocks, resolve_boundary_value
 
 
 class HaloChunkedSyncRasterModel:
