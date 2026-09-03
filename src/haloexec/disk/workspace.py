@@ -41,7 +41,7 @@ from typing import Any
 
 import numpy as np
 
-from .engine import Block, make_blocks, resolve_boundary_value
+from ..engine import Block, make_blocks, resolve_boundary_value
 
 
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:

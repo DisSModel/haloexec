@@ -41,7 +41,7 @@ import numpy as np
 from dissmodel.geo.raster.backend import RasterBackend
 from dissmodel.geo.raster.cellular_automaton import RasterCellularAutomaton
 
-from .engine import Block, make_blocks, resolve_boundary_value
+from ..engine import Block, make_blocks, resolve_boundary_value
 
 
 class HaloChunkedRasterCellularAutomaton(RasterCellularAutomaton):

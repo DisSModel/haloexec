@@ -37,7 +37,7 @@ try:
 except ImportError:
     HAS_ZARR = False
 
-from .disk_backend import MemmapRasterWorkspace
+from ..workspace import MemmapRasterWorkspace
 
 
 def _resolve_axis_order(arr, expected_names: tuple[str, ...]) -> tuple[int, ...] | None:

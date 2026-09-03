@@ -1,21 +1,14 @@
 from .engine import Block, make_blocks, resolve_boundary_value
-from .dissmodel_ca import HaloChunkedRasterCellularAutomaton
-from .sync_model import HaloChunkedSyncRasterModel
-from .disk_backend import MemmapRasterWorkspace
-from .disk_sync_model import DiskChunkedSyncRasterModel, workspace_arrays_for_sync_model
-from .geotiff_io import load_geotiff_into_workspace, load_geotiffs_into_workspace
-from .zarr_io import load_zarr_into_workspace, load_zarr_tiles_into_workspace
-from .convergence import sweep_until_convergence
+from .disk.workspace import MemmapRasterWorkspace
+from .disk.io.geotiff import load_geotiff_into_workspace, load_geotiffs_into_workspace
+from .disk.io.zarr import load_zarr_into_workspace, load_zarr_tiles_into_workspace
+from .disk.convergence import sweep_until_convergence
 
 __all__ = [
     "Block",
     "make_blocks",
     "resolve_boundary_value",
-    "HaloChunkedRasterCellularAutomaton",
-    "HaloChunkedSyncRasterModel",
     "MemmapRasterWorkspace",
-    "DiskChunkedSyncRasterModel",
-    "workspace_arrays_for_sync_model",
     "load_geotiff_into_workspace",
     "load_geotiffs_into_workspace",
     "load_zarr_into_workspace",
@@ -23,4 +16,23 @@ __all__ = [
     "sweep_until_convergence",
 ]
 
-__version__ = "1.1.0"
+# Os adaptadores dissmodel (HaloChunkedRasterCellularAutomaton,
+# HaloChunkedSyncRasterModel, DiskChunkedSyncRasterModel) são opcionais
+# -- os módulos acima funcionam sem dissmodel instalado. Só ficam
+# disponíveis se o extra "dissmodel" estiver instalado
+# (pip install "haloexec[dissmodel]"). Mesmo padrão usado em
+# pymangue/__init__.py para CMMAModel.
+try:
+    from .ram.cellular_automaton import HaloChunkedRasterCellularAutomaton
+    from .ram.sync_model import HaloChunkedSyncRasterModel
+    from .disk.sync_model import DiskChunkedSyncRasterModel, workspace_arrays_for_sync_model
+    __all__ += [
+        "HaloChunkedRasterCellularAutomaton",
+        "HaloChunkedSyncRasterModel",
+        "DiskChunkedSyncRasterModel",
+        "workspace_arrays_for_sync_model",
+    ]
+except ImportError:
+    pass
+
+__version__ = "2.0.0"

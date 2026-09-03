@@ -52,7 +52,7 @@ import numpy as np
 
 from dissmodel.geo.raster.backend import RasterBackend
 
-from .disk_backend import MemmapRasterWorkspace
+from .workspace import MemmapRasterWorkspace
 
 
 def workspace_arrays_for_sync_model(

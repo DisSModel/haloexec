@@ -35,7 +35,7 @@ try:
 except ImportError:
     HAS_RASTERIO = False
 
-from .disk_backend import MemmapRasterWorkspace
+from ..workspace import MemmapRasterWorkspace
 
 
 def load_geotiff_into_workspace(
