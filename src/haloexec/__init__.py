@@ -14,6 +14,7 @@ __all__ = [
     "load_zarr_into_workspace",
     "load_zarr_tiles_into_workspace",
     "sweep_until_convergence",
+    "DiskChunkedRasterCellularAutomaton",
 ]
 
 # Os adaptadores dissmodel (HaloChunkedRasterCellularAutomaton,
@@ -26,11 +27,13 @@ try:
     from .ram.cellular_automaton import HaloChunkedRasterCellularAutomaton
     from .ram.sync_model import HaloChunkedSyncRasterModel
     from .disk.sync_model import DiskChunkedSyncRasterModel, workspace_arrays_for_sync_model
+    from .disk.cellular_automaton import DiskChunkedRasterCellularAutomaton
     __all__ += [
         "HaloChunkedRasterCellularAutomaton",
         "HaloChunkedSyncRasterModel",
         "DiskChunkedSyncRasterModel",
         "workspace_arrays_for_sync_model",
+        "DiskChunkedRasterCellularAutomaton",
     ]
 except ImportError:
     pass
