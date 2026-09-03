@@ -37,7 +37,7 @@ try:
 except ImportError:
     HAS_ZARR = False
 
-from .disk_backend import MemmapRasterWorkspace
+from ..workspace import MemmapRasterWorkspace
 
 
 def _resolve_axis_order(arr, expected_names: tuple[str, ...]) -> tuple[int, ...] | None:
@@ -191,5 +191,168 @@ def load_zarr_into_workspace(
                 data = raw
 
             workspace.write_block_to_read_slot(block, array_name, data)
+
+    workspace.flush()
+
+
+def load_zarr_tiles_into_workspace(
+    workspace: MemmapRasterWorkspace,
+    tiles: list[dict],
+    array: str | None = None,
+    fill: float | None = None,
+    skip_empty_blocks: bool = False,
+) -> None:
+    """
+    Popula UM array do workspace a partir de N stores Zarr posicionados
+    lado a lado — o caso multi-tile, que `load_zarr_into_workspace` não
+    cobre (ela recebe um store e exige que ele tenha o shape do workspace
+    inteiro).
+
+    Está para o Zarr como o VRT do geomosaic está para o GeoTIFF: junta
+    pedaços numa grade contínua. A diferença é que não existe formato de
+    mosaico para Zarr, então a costura acontece aqui, na leitura.
+
+    Parameters
+    ----------
+    tiles : list[dict]
+        Um dicionário por pedaço, com as chaves:
+
+        - ``url``      — caminho do store Zarr
+        - ``variable`` — nome da variável dentro do store
+        - ``row_off``  — linha, em pixel, onde o pedaço começa no workspace
+        - ``col_off``  — coluna, em pixel
+        - ``height``   — altura do pedaço, em pixel
+        - ``width``    — largura do pedaço, em pixel
+
+        É exatamente o formato que ``CubeClient.tile_layout()`` do
+        disscube devolve, mas nada aqui depende do disscube: qualquer
+        origem que saiba dizer caminho e posição serve. Chaves extras são
+        ignoradas.
+    array : str, optional
+        Nome do array NO WORKSPACE a preencher. Se None, usa o
+        ``variable`` do primeiro tile — útil quando os nomes coincidem.
+    fill : float, optional
+        Valor para as células que nenhum tile cobre (buracos da malha,
+        cantos fora da área de estudo). Se None, usa NaN para arrays de
+        ponto flutuante e 0 para inteiros.
+    skip_empty_blocks : bool
+        Se True, blocos que nenhum tile toca não são escritos. Como os
+        `.dat` do workspace nascem esparsos, isso deixa esses blocos sem
+        ocupar disco — mas eles passam a LER COMO ZERO, não como `fill`.
+        Só use quando 0 não for um valor válido do domínio (ver a nota
+        "Esparsidade e custo de disco" no README). Default False, que
+        escreve `fill` e mantém a distinção ao custo do disco.
+
+    Raises
+    ------
+    ValueError
+        Se `tiles` estiver vazio, se o array não for declarado no
+        workspace, se algum tile faltar chave obrigatória, ou se um tile
+        cair fora dos limites do workspace — todos casos em que seguir
+        adiante produziria um mosaico silenciosamente errado.
+    ImportError
+        Se o extra "zarr" não estiver instalado.
+    """
+    if not HAS_ZARR:
+        raise ImportError("zarr é necessário — pip install -e '.[zarr]'")
+    if not tiles:
+        raise ValueError("A lista de tiles está vazia — nada a carregar.")
+
+    obrigatorias = {"url", "variable", "row_off", "col_off", "height", "width"}
+    for i, t in enumerate(tiles):
+        faltando = obrigatorias - set(t)
+        if faltando:
+            raise ValueError(
+                f"tiles[{i}] não tem as chaves {sorted(faltando)}; "
+                f"cada tile precisa de {sorted(obrigatorias)}."
+            )
+
+    # Dois pedaços na mesma posição não é ambiguidade a resolver por ordem:
+    # um sobrescreveria o outro em silêncio. Acontece de verdade quando o
+    # layout mistura fatias temporais da mesma variável — cada ano repete as
+    # mesmas posições.
+    ocupadas: dict[tuple[int, int], str] = {}
+    for t in tiles:
+        chave = (t["row_off"], t["col_off"])
+        if chave in ocupadas:
+            raise ValueError(
+                f"Dois tiles ocupam a posição ({chave[0]}, {chave[1]}): "
+                f"{ocupadas[chave]!r} e {t.get('tile_id')!r}. Um sobrescreveria "
+                f"o outro. Se o layout mistura fatias temporais, escolha uma "
+                f"antes de carregar."
+            )
+        ocupadas[chave] = t.get("tile_id")
+
+    array_name = array or tiles[0]["variable"]
+    declarados = set(workspace.metadata["arrays"])
+    if array_name not in declarados:
+        raise ValueError(
+            f"O workspace não declara o array {array_name!r} "
+            f"(declarados: {sorted(declarados)})."
+        )
+
+    altura, largura = workspace.shape
+    for t in tiles:
+        if (t["row_off"] < 0 or t["col_off"] < 0
+                or t["row_off"] + t["height"] > altura
+                or t["col_off"] + t["width"] > largura):
+            raise ValueError(
+                f"tile {t.get('tile_id')!r} em "
+                f"({t['row_off']},{t['col_off']}) {t['height']}x{t['width']} "
+                f"não cabe no workspace {altura}x{largura}."
+            )
+
+    dtype = np.dtype(workspace.metadata["arrays"][array_name])
+    if fill is None:
+        fill = np.nan if np.issubdtype(dtype, np.floating) else 0
+
+    abertos = {}
+    try:
+        for t in tiles:
+            chave = (t["url"], t["variable"])
+            if chave not in abertos:
+                abertos[chave] = _open_variable(t["url"], t["variable"])
+
+        # Percorre os BLOCOS do workspace, não os tiles: um bloco pode cair
+        # sobre dois tiles vizinhos, ou sobre um buraco da malha. Montá-lo a
+        # partir de tudo que o cobre é o que faz a costura ficar correta —
+        # escrever tile a tile deixaria as bordas dependendo da ordem.
+        for block in workspace.blocks():
+            buf = None
+            for t in tiles:
+                r0 = max(block.r0, t["row_off"])
+                r1 = min(block.r1, t["row_off"] + t["height"])
+                c0 = max(block.c0, t["col_off"])
+                c1 = min(block.c1, t["col_off"] + t["width"])
+                if r0 >= r1 or c0 >= c1:
+                    continue
+
+                if buf is None:
+                    buf = np.full(
+                        (block.r1 - block.r0, block.c1 - block.c0), fill, dtype=dtype
+                    )
+
+                arr = abertos[(t["url"], t["variable"])]
+                ordem = _resolve_axis_order(arr, ("y", "x"))
+                trecho = np.asarray(arr[
+                    r0 - t["row_off"]:r1 - t["row_off"],
+                    c0 - t["col_off"]:c1 - t["col_off"],
+                ]) if ordem in (None, (0, 1)) else np.asarray(arr[
+                    c0 - t["col_off"]:c1 - t["col_off"],
+                    r0 - t["row_off"]:r1 - t["row_off"],
+                ]).T
+
+                buf[r0 - block.r0:r1 - block.r0, c0 - block.c0:c1 - block.c0] = trecho
+
+            if buf is None:
+                if skip_empty_blocks:
+                    continue
+                buf = np.full(
+                    (block.r1 - block.r0, block.c1 - block.c0), fill, dtype=dtype
+                )
+
+            workspace.write_block_to_read_slot(block, array_name, buf)
+    finally:
+        abertos.clear()
 
     workspace.flush()

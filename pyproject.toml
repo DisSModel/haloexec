@@ -10,12 +10,21 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.24",
-    "dissmodel>=0.6.3",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
-# Opcional: só necessário para rodar tests/test_flood_model_equivalence.py,
+# Opcional: só necessário para HaloChunkedRasterCellularAutomaton,
+# HaloChunkedSyncRasterModel, DiskChunkedSyncRasterModel
+# (dissmodel_ca.py, sync_model.py, disk_sync_model.py) -- os únicos 3
+# módulos do haloexec que dependem de dissmodel. Os outros 5
+# (engine.py, disk_backend.py, convergence.py, geotiff_io.py,
+# zarr_io.py) funcionam sem dissmodel instalado.
+dissmodel = ["dissmodel>=0.6.3"]
+# Opcional: só necessário para os testes de equivalência em
+# examples/brmangue_validation/ (fora de tests/ de propósito -- ver
+# nota em [tool.pytest.ini_options] mais abaixo), que validam haloexec
+# contra o FloodModel/MangroveModel real do BR-MANGUE.
 # que valida haloexec contra o FloodModel real do BR-MANGUE.
 brmangue = ["brmangue-dissmodel @ git+https://github.com/DisSModel/brmangue-dissmodel.git"]
 # Opcional: só necessário para geotiff_io.py (carregamento de GeoTIFF/VRT
@@ -34,6 +43,20 @@ zarr-test = ["zarr>=2.16", "xarray>=2023.1"]
 # produzido pelo geomosaic (pacote separado, sem relação de runtime
 # com haloexec — só usado aqui como prova de integração em teste).
 geomosaic = ["geomosaic @ git+https://github.com/LambdaGeo/geomosaic.git"]
+# Opcional: só necessário para examples/gol_patterns/gol_patterns_haloexec.py
+# e tests/test_gol_patterns_example.py (o teste de equivalência desse
+# exemplo) -- dissmodel-ca fornece PATTERNS (padrões clássicos de Game
+# of Life) e dissmodel.visualization.RasterMap.
+dissmodel-ca = ["dissmodel-ca @ git+https://github.com/DisSModel/dissmodel-ca.git"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+# Restringe a descoberta padrão do pytest a tests/ -- sem isso, os
+# scripts em examples/ (alguns dos quais dependem de brmangue-dissmodel,
+# um repositório externo que pode mudar ou deixar de existir) seriam
+# coletados automaticamente por um `pytest` sem argumento na raiz do
+# repositório. Ainda dá pra rodá-los explicitamente:
+# `pytest examples/brmangue_validation/test_flood_model_equivalence.py`.
+testpaths = ["tests"]

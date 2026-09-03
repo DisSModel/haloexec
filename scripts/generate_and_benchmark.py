@@ -31,7 +31,7 @@ from pathlib import Path
 
 import numpy as np
 
-from haloexec.disk_backend import MemmapRasterWorkspace
+from haloexec.disk.workspace import MemmapRasterWorkspace
 
 
 def _game_of_life_rule(padded: dict[str, np.ndarray], halo: int = 1) -> dict[str, np.ndarray]:

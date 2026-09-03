@@ -40,7 +40,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .disk_backend import MemmapRasterWorkspace, Block
+from .workspace import MemmapRasterWorkspace, Block
 
 
 def sweep_until_convergence(

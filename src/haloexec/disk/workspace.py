@@ -41,7 +41,7 @@ from typing import Any
 
 import numpy as np
 
-from .engine import Block, make_blocks, resolve_boundary_value
+from ..engine import Block, make_blocks, resolve_boundary_value
 
 
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
@@ -151,6 +151,34 @@ class MemmapRasterWorkspace:
         block_w: int,
         halo: int = 1,
     ) -> "MemmapRasterWorkspace":
+        """Cria um workspace novo, com os dois slots do double-buffer.
+
+        Os arquivos `.dat` nascem ESPARSOS: só as regiões efetivamente
+        escritas ocupam blocos no disco. Ler uma região nunca escrita
+        devolve zero — garantia do próprio sistema de arquivos POSIX,
+        idêntica ao que uma pré-escrita de zeros daria. Ou seja, a
+        semântica é a mesma de antes desta mudança; o que muda é só o
+        custo em disco (medido: um array de 4000x4000 float64 sai de
+        122 MB reais para 0 MB até que algo seja escrito).
+
+        Consequência prática, e limite desta economia: ela só aparece se
+        quem carrega DEIXAR blocos sem escrever. Um carregador que
+        preenche todo bloco — inclusive os vazios, com um sentinela como
+        NaN — torna o arquivo denso de novo. E deixar de escrever
+        significa que aquela região vale ZERO, não "ausente": para
+        domínios em que 0 é um valor válido (um código de classe, uma
+        elevação ao nível do mar) os dois casos ficam indistinguíveis.
+
+        Distinguir "ausente" de "zero válido" precisaria de um canal a
+        mais, que este formato não tem — ver a nota "Esparsidade e custo
+        de disco" no README para o desenho proposto (índice de blocos
+        presentes + nodata declarado por array, o mesmo mecanismo que o
+        GeoTIFF usa com TileOffsets == 0).
+
+        Nada disso afeta o custo de RAM, que é resolvido pelo memmap em
+        si: o kernel traz páginas sob demanda, então percorrer a grade
+        inteira nunca a materializa de uma vez.
+        """
         root = Path(root).resolve()
         if root.exists() and any(root.iterdir()):
             raise FileExistsError(f"O diretório do workspace deve ser novo e vazio: {root}")
@@ -161,8 +189,10 @@ class MemmapRasterWorkspace:
             for name, dtype in dtypes.items():
                 path = root / slot / f"{name}.dat"
                 path.parent.mkdir(parents=True, exist_ok=True)
+                # mode="w+" dimensiona o arquivo sem tocar os bytes: ele fica
+                # esparso. NÃO pré-escrever zeros aqui — isso alocaria tudo
+                # fisicamente sem mudar nada do que se lê depois.
                 mm = np.memmap(path, dtype=dtype, mode="w+", shape=shape)
-                mm[:] = 0
                 mm.flush()
 
         _write_json_atomic(root / cls.METADATA, {
