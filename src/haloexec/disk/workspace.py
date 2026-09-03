@@ -313,3 +313,9 @@ class MemmapRasterWorkspace:
         for slot in self._slots.values():
             for mm in slot.values():
                 mm.flush()
+
+    def as_backend(self, stride: int = 1, nodata_value: float | int | None = None):
+        """Devolve um adaptador WorkspaceRasterBackend para uso com RasterMap/dissmodel."""
+        from .backend import WorkspaceRasterBackend
+        return WorkspaceRasterBackend(self, stride=stride, nodata_value=nodata_value)
+

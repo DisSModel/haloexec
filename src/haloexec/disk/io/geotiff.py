@@ -147,3 +147,85 @@ def load_geotiffs_into_workspace(
             ds.close()
 
     workspace.flush()
+
+
+def save_workspace_to_geotiff(
+    workspace: MemmapRasterWorkspace,
+    path: str | Path,
+    bands: list[str] | list[tuple[str, str, float]],
+    transform: Any = None,
+    crs: Any = "EPSG:31984",
+    compress: str = "lzw",
+) -> None:
+    """
+    Grava arrays do MemmapRasterWorkspace em um GeoTIFF em janelas
+    (bloco a bloco), sem nunca materializar a grade inteira em RAM.
+
+    Parameters
+    ----------
+    workspace : MemmapRasterWorkspace
+        Workspace de onde ler os dados do slot de leitura atual.
+    path : str | Path
+        Caminho do arquivo GeoTIFF de saída.
+    bands : list[str] ou list[(nome, dtype, nodata)]
+        Nomes dos arrays a gravar como bandas (1, 2, ...).
+    transform : Affine, optional
+        Matriz de geotransformação do rasterio. Se None, cria uma padrão.
+    crs : CRS ou str, default="EPSG:31984"
+        Sistema de referência de coordenadas.
+    compress : str, default="lzw"
+        Compressão do GeoTIFF.
+    """
+    if not HAS_RASTERIO:
+        raise ImportError("rasterio é necessário — pip install -e '.[geotiff]'")
+
+    from rasterio.transform import from_origin
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    parsed_bands: list[tuple[str, str, float | None]] = []
+    for item in bands:
+        if isinstance(item, tuple):
+            parsed_bands.append((item[0], item[1], item[2]))
+        else:
+            name = str(item)
+            dtype_str = str(workspace.metadata["arrays"][name])
+            parsed_bands.append((name, dtype_str, None))
+
+    height, width = workspace.shape
+    if transform is None:
+        transform = from_origin(500_000.0, 9_700_000.0, 30.0, 30.0)
+
+    common_dtype = np.result_type(*(np.dtype(dtype) for _, dtype, _ in parsed_bands))
+    first_nodata = parsed_bands[0][2]
+
+    tiled_kwargs = {}
+    if width >= 16 and height >= 16:
+        bx = (min(workspace.block_w, width) // 16) * 16 or 16
+        by = (min(workspace.block_h, height) // 16) * 16 or 16
+        tiled_kwargs = {"tiled": True, "blockxsize": bx, "blockysize": by}
+    else:
+        tiled_kwargs = {"tiled": False}
+
+    with rasterio.open(
+        str(path),
+        "w",
+        driver="GTiff",
+        height=height,
+        width=width,
+        count=len(parsed_bands),
+        dtype=str(common_dtype),
+        crs=crs,
+        transform=transform,
+        nodata=first_nodata,
+        compress=compress,
+        **tiled_kwargs,
+    ) as dst:
+        for block in workspace.blocks():
+            window = Window(block.c0, block.r0, block.c1 - block.c0, block.r1 - block.r0)
+            for band_idx, (name, _dtype, _nodata) in enumerate(parsed_bands, start=1):
+                core = workspace.read_block_core(block, name).astype(common_dtype)
+                dst.write(core, band_idx, window=window)
+
+
