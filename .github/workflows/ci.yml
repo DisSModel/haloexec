@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop", "workspace-esparso"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Núcleo puro: sem dissmodel nem nenhum extra geoespacial.
+          # Garante que engine.py, disk/workspace.py, disk/convergence.py
+          # continuam com zero dependências em runtime.
+          - name: "core (sem extras)"
+            extras: "dev"
+          # dissmodel + todos os extras geoespaciais opcionais que não
+          # dependem de repositórios externos ainda em construção
+          # (brmangue-dissmodel fica de fora de propósito).
+          - name: "full (dissmodel + geo extras)"
+            extras: "dev,dissmodel,geotiff,zarr,zarr-test,geomosaic,dissmodel-ca"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package (${{ matrix.name }})
+        run: pip install -e ".[${{ matrix.extras }}]"
+
+      - name: Run test suite
+        run: pytest -v
+
+      - name: Extract and smoke-test Python blocks from docs/
+        if: matrix.name == 'full (dissmodel + geo extras)'
+        run: |
+          python - <<'EOF'
+          import re, subprocess, sys, pathlib
+
+          docs = pathlib.Path("docs").glob("*.md")
+          failures = []
+          # Palavras que indicam um bloco ilustrativo (referencia dado
+          # externo que não existe neste repo, ou escala grande demais
+          # pra rodar em CI) -- pulamos, não são candidatos a bug de
+          # import/herança, que é o que este smoke-test mira.
+          SKIP_MARKERS = ("50_000", "study_area.tif", "tile_001.zarr", "/tmp/my_large_workspace")
+
+          for doc in docs:
+              text = doc.read_text(encoding="utf-8")
+              blocks = re.findall(r"```python\n(.*?)```", text, re.DOTALL)
+              for i, block in enumerate(blocks):
+                  if any(marker in block for marker in SKIP_MARKERS):
+                      continue
+                  if "import" not in block:
+                      continue
+                  print(f"--- {doc.name} bloco {i} ---")
+                  result = subprocess.run(
+                      [sys.executable, "-c", block],
+                      capture_output=True, text=True, timeout=120,
+                  )
+                  if result.returncode != 0:
+                      failures.append((doc.name, i, result.stderr))
+                      print(result.stderr)
+
+          if failures:
+              print(f"\n{len(failures)} bloco(s) de código quebrado(s) em docs/:")
+              for name, i, err in failures:
+                  print(f"  - {name} bloco {i}")
+              sys.exit(1)
+          print("Todos os blocos de código testáveis em docs/ rodaram sem erro.")
+          EOF

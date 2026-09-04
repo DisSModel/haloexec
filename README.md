@@ -6,6 +6,15 @@ Domínio** com **zonas de Halo** (Ghost Cell Pattern), integrado ao
 pip — sem viver dentro da pasta do repo `dissmodel` core, que está
 atualmente sob revisão JOSS (issue #10827).
 
+> [!NOTE]
+> **Complete English Documentation Available:**  
+> For the complete documentation in English covering API specifications, theory, architecture, and recipes, see the [`docs/`](docs/) directory:
+> - [**Documentation Index**](docs/README.md)
+> - [**Theory and Core Concepts**](docs/theory_and_concepts.md)
+> - [**Architecture & Design Patterns**](docs/architecture.md)
+> - [**API Reference**](docs/api_reference.md)
+> - [**Tutorials & Practical Recipes**](docs/tutorials_and_recipes.md)
+
 ## Motivação
 
 O padrão bloco+halo usado no `chunked_engine.py` (BR-MANGUE,
@@ -92,6 +101,17 @@ pytest
 ```
 
 Depende de `dissmodel>=0.6.3` (PyPI) como dependência real de runtime.
+
+> **Nota:** `examples/brmangue_validation/` (scripts, testes de
+> equivalência e fixtures que validavam contra o dataset real da Ilha
+> do Maranhão e o golden do TerraME) foi removido desta branch — o
+> modelo BR-MANGUE (`brmangue-dissmodel`) ainda está em construção
+> ativa, e o exemplo dependia de uma versão específica dele. Os
+> "Achados" abaixo permanecem documentados porque continuam válidos
+> tecnicamente (o bug e a causa raiz não mudam), mas os caminhos de
+> arquivo que citam (`examples/brmangue_validation/...`) não existem
+> mais neste repositório — servem como registro histórico da
+> investigação, não como referência executável.
 
 ## Achado: `boundary_value=0` não é seguro para todo domínio
 
