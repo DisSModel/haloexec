@@ -39,6 +39,7 @@ import numpy as np
 from dissmodel.core import Environment
 from dissmodel.geo.raster.backend import RasterBackend
 from haloexec import HaloChunkedRasterCellularAutomaton
+from dissmodel.visualization.raster_map import RasterMap
 
 class GameOfLife(HaloChunkedRasterCellularAutomaton):
     def rule(self, arrays):
@@ -53,7 +54,16 @@ backend.set("state", np.random.randint(0, 2, (200, 200)).astype(np.uint8))
 
 env = Environment(start_time=1, end_time=50)
 GameOfLife(backend=backend, block_h=50, block_w=50, halo=1)
+
+RasterMap(
+    backend=backend,
+    band="state",
+    color_map={0: "#ffffff", 1: "#2f8f6e"},
+    labels={0: "morta", 1: "viva"},
+    title=f"Padrões clássicos sobre fronteiras de bloco",
+)
 env.run()
+
 ```
 
 The same `GameOfLife` class, inheriting from plain
