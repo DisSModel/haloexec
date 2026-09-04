@@ -69,9 +69,13 @@ Use this recipe when grid dimensions exceed physical RAM (e.g., $50,000 \times 5
 from pathlib import Path
 import numpy as np
 from dissmodel.core import Environment
+from dissmodel.geo.raster.cellular_automaton import RasterCellularAutomaton
 from haloexec import MemmapRasterWorkspace, DiskChunkedRasterCellularAutomaton
 
-class MassiveGameOfLife(DiskChunkedRasterCellularAutomaton):
+# Mixin cooperativo: precisa de RasterCellularAutomaton como segunda
+# base (MRO) — herança simples aqui falha em runtime (setup() não tem
+# para onde delegar via super()).
+class MassiveGameOfLife(DiskChunkedRasterCellularAutomaton, RasterCellularAutomaton):
     def rule(self, arrays: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         state = arrays["state"]
         alive_neighbors = self.backend.focal_sum_mask(state == 1)
@@ -313,10 +317,8 @@ Render and save checkpoints on massive rasters without CPU/RAM bottlenecks.
 
 ```python
 from dissmodel.core import Environment
-from haloexec import (
-    MemmapRasterWorkspace,
-    CheckpointRasterMap,
-)
+from haloexec import MemmapRasterWorkspace
+from haloexec.visualization import CheckpointRasterMap
 
 ws = MemmapRasterWorkspace(Path("/tmp/my_large_workspace"))
 

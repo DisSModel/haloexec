@@ -7,6 +7,8 @@ name = "haloexec"
 version = "0.1.0"
 description = "Motor genérico de execução de Autômatos Celulares por decomposição de domínio (blocos+halo)"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.24",
@@ -21,12 +23,6 @@ dev = ["pytest>=7.0"]
 # (engine.py, disk_backend.py, convergence.py, geotiff_io.py,
 # zarr_io.py) funcionam sem dissmodel instalado.
 dissmodel = ["dissmodel>=0.6.3"]
-# Opcional: só necessário para os testes de equivalência em
-# examples/brmangue_validation/ (fora de tests/ de propósito -- ver
-# nota em [tool.pytest.ini_options] mais abaixo), que validam haloexec
-# contra o FloodModel/MangroveModel real do BR-MANGUE.
-# que valida haloexec contra o FloodModel real do BR-MANGUE.
-brmangue = ["brmangue-dissmodel @ git+https://github.com/DisSModel/brmangue-dissmodel.git"]
 # Opcional: só necessário para geotiff_io.py (carregamento de GeoTIFF/VRT
 # direto para MemmapRasterWorkspace, bloco a bloco).
 geotiff = ["rasterio>=1.3"]
@@ -54,9 +50,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 # Restringe a descoberta padrão do pytest a tests/ -- sem isso, os
-# scripts em examples/ (alguns dos quais dependem de brmangue-dissmodel,
-# um repositório externo que pode mudar ou deixar de existir) seriam
-# coletados automaticamente por um `pytest` sem argumento na raiz do
-# repositório. Ainda dá pra rodá-los explicitamente:
-# `pytest examples/brmangue_validation/test_flood_model_equivalence.py`.
+# scripts de exemplo em examples/ seriam coletados automaticamente por
+# um `pytest` sem argumento na raiz do repositório.
 testpaths = ["tests"]

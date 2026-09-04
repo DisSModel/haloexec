@@ -135,7 +135,7 @@ A ubiquitous practice in numerical computing is zero-padding (`np.pad(..., const
 If unmanaged, zero-padding external boundaries injects artificial river channels or sea-level cells along the edge of the study area, generating phantom colonization and divergent model dynamics.
 
 ### 4.2 Per-Array Sentinel Mapping
-`haloexec` prevents this failure via [resolve_boundary_value](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/engine.py#L55):
+`haloexec` prevents this failure via [resolve_boundary_value](../src/haloexec/engine.py#L55):
 - `boundary_value` accepts a dictionary mapping array names to their true domain `nodata` sentinel:
   ```python
   boundary_value = {"uso": 0, "alt": -9999.0, "solo": -1}
@@ -149,7 +149,7 @@ If unmanaged, zero-padding external boundaries injects artificial river channels
 When scaling to regional or national extents (e.g., a 40,000 $\times$ 40,000 grid encompassing 1.6 billion cells, or 6.4 GB per float32 layer), allocating global in-memory NumPy arrays or performing global `np.pad` results in immediate Out-Of-Memory (OOM) termination.
 
 ### 5.1 Memory-Mapped I/O (`numpy.memmap`)
-[`MemmapRasterWorkspace`](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/workspace.py#L81) stores spatial arrays directly on the filesystem as uncompressed binary disk files (`.dat`) accessed through POSIX `mmap()` system calls.
+[`MemmapRasterWorkspace`](../src/haloexec/disk/workspace.py#L81) stores spatial arrays directly on the filesystem as uncompressed binary disk files (`.dat`) accessed through POSIX `mmap()` system calls.
 
 Under `mmap`:
 1. The kernel maps the file on disk into the virtual address space of the process.
@@ -174,7 +174,7 @@ In a 40,000 $\times$ 40,000 Conway's Game of Life simulation (1.6 billion cells 
 This proves that `haloexec`'s memory footprint is $O(b_h \cdot b_w)$—proportional strictly to the block size, and **strictly independent of the global domain size** $H \times W$.
 
 ### 5.3 Filesystem Sparsity Economics
-When creating new arrays, [`MemmapRasterWorkspace.create()`](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/workspace.py#L145) uses `mode="w+"` to truncate and set the file length without writing zeros across the disk blocks.
+When creating new arrays, [`MemmapRasterWorkspace.create()`](../src/haloexec/disk/workspace.py#L145) uses `mode="w+"` to truncate and set the file length without writing zeros across the disk blocks.
 
 On modern filesystems (ext4, XFS, APFS, NTFS), this creates **POSIX sparse files**:
 - Unwritten disk blocks occupy zero physical storage on disk.
@@ -230,7 +230,7 @@ backend.arrays["alt_past"] = backend.arrays["alt"].copy()
 ```
 If applied naively to a disk-backed memory-mapped workspace, this call would materialize the entire multi-gigabyte array in RAM, crashing the system.
 
-`haloexec` resolves this via [write_block_to_read_slot](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/workspace.py#L269):
+`haloexec` resolves this via [write_block_to_read_slot](../src/haloexec/disk/workspace.py#L269):
 1. Historical arrays `<name>_past` are allocated directly within both disk slots.
 2. In `pre_execute()` and `post_execute()`, synchronization copies data **block-by-block** directly within the **active read slot**:
    $$\text{Slot}_{\text{read}}[name\_past][block] \longleftarrow \text{Slot}_{\text{read}}[name][block]$$
@@ -248,10 +248,10 @@ Certain spatial processes cannot be bounded by a finite, localized halo radius:
 Resolving these dynamics with a static halo would require setting $h = \max(H, W)$, degenerating into a monolithic execution that exhausts memory.
 
 ### 7.2 Gauss-Seidel Iterative Convergence
-For these unbounded processes, [`sweep_until_convergence`](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/convergence.py#L46) replaces the fixed halo ping-pong mechanism with an **iterative relaxation sweep**:
+For these unbounded processes, [`sweep_until_convergence`](../src/haloexec/disk/convergence.py#L46) replaces the fixed halo ping-pong mechanism with an **iterative relaxation sweep**:
 - Uses a minimal halo ($h = 1$).
 - Traverses all blocks in the domain repeatedly.
-- Updates are written **immediately in-place** to the active read buffer via [write_block_core_in_place](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/workspace.py#L279).
+- Updates are written **immediately in-place** to the active read buffer via [write_block_core_in_place](../src/haloexec/disk/workspace.py#L279).
 
 ```
 Sweep k:
@@ -279,7 +279,7 @@ and the state space $\mathcal{S}$ is finite (e.g., binary connectivity $\{0, 1\}
 ## 8. Spatial Ingestion & Coordinate Anomalies
 
 ### 8.1 GeoTIFF Windowed Streaming
-Rather than loading large GeoTIFF or VRT rasters monolithically into memory, [`load_geotiffs_into_workspace`](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/io/geotiff.py#L74) maps each block's bounding box to a `rasterio.windows.Window`:
+Rather than loading large GeoTIFF or VRT rasters monolithically into memory, [`load_geotiffs_into_workspace`](../src/haloexec/disk/io/geotiff.py#L74) maps each block's bounding box to a `rasterio.windows.Window`:
 
 $$\text{Window}(\text{col\_off} = c_0, \; \text{row\_off} = r_0, \; \text{width} = c_1 - c_0, \; \text{height} = r_1 - r_0)$$
 
@@ -292,7 +292,7 @@ When ingesting data cubes from modern cloud stores (such as `disscube` or xarray
   $$\text{shape}(arr) = (N, N) \equiv (N, N)$$
   fails to detect inverted axes. This causes silent, catastrophic transpose corruption (e.g., swapping latitude and longitude).
 
-To safeguard data integrity, [`load_zarr_into_workspace`](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/io/zarr.py#L86) interrogates native Zarr v3 dimension metadata (`arr.metadata.dimension_names`):
+To safeguard data integrity, [`load_zarr_into_workspace`](../src/haloexec/disk/io/zarr.py#L86) interrogates native Zarr v3 dimension metadata (`arr.metadata.dimension_names`):
 1. Resolves actual dimension positions: e.g., identifying whether `"y"` is at axis 0 or axis 1.
 2. Generates canonical index projections during chunk extraction.
 3. Automatically transposes extracted sub-arrays to standard `(y, x)` canonical orientation before committing blocks to the workspace.

@@ -8,19 +8,19 @@ Welcome to the comprehensive documentation for **`haloexec`**, a high-performanc
 
 This documentation is organized into modular guides covering foundational theory, software architecture, complete API specifications, and end-to-end practical tutorials:
 
-1. [**Theory and Core Concepts**](file:///home/sergio/develop/github/lambdageo/haloexec/docs/theory_and_concepts.md)  
+1. [**Theory and Core Concepts**](./theory_and_concepts.md)  
    *Detailed mathematical, algorithmic, and computational foundations.*  
    Domain decomposition, ghost cell exchange, multi-hop spatial dependency reach, external boundary sentinel pitfalls, virtual memory and POSIX sparse disk memmaps, double-buffering race conditions, iterative Gauss-Seidel convergence, and Zarr axis-ordering anomalies.
 
-2. [**Architecture and Design Patterns**](file:///home/sergio/develop/github/lambdageo/haloexec/docs/architecture.md)  
+2. [**Architecture and Design Patterns**](./architecture.md)  
    *Software design and structural mechanics.*  
    Layered decoupling (zero-dependency core engine vs. ecosystem adapters), cooperative multiple inheritance via Python's Method Resolution Order (MRO), runtime backend-swapping pattern, and memory-mapped double-buffer slot lifecycle.
 
-3. [**API Reference**](file:///home/sergio/develop/github/lambdageo/haloexec/docs/api_reference.md)  
+3. [**API Reference**](./api_reference.md)  
    *Exhaustive interface specification for all modules, classes, and functions.*  
    Signatures, parameter descriptions, invariants, return types, exceptions, and side effects across RAM, disk, I/O, convergence, and visualization subsystems.
 
-4. [**Tutorials and Practical Recipes**](file:///home/sergio/develop/github/lambdageo/haloexec/docs/tutorials_and_recipes.md)  
+4. [**Tutorials and Practical Recipes**](./tutorials_and_recipes.md)  
    *Step-by-step implementation walkthroughs.*  
    Building in-memory chunked CAs, executing out-of-core billion-cell models, windowed GeoTIFF/VRT ingestion, multi-tile Zarr assimilation, unbounded connectivity propagation, and memory profiling (`RssAnon` vs. `RssFile`).
 
@@ -113,18 +113,23 @@ env.run()
 
 ### 2. Out-of-Core Disk-Backed Simulation
 
-When the domain exceeds physical memory, initialize a [`MemmapRasterWorkspace`](file:///home/sergio/develop/github/lambdageo/haloexec/src/haloexec/disk/workspace.py#L81) and run out-of-core:
+When the domain exceeds physical memory, initialize a [`MemmapRasterWorkspace`](../src/haloexec/disk/workspace.py#L81) and run out-of-core:
 
 ```python
 from pathlib import Path
 import numpy as np
 from dissmodel.core import Environment
+from dissmodel.geo.raster.cellular_automaton import RasterCellularAutomaton
 from haloexec import (
     MemmapRasterWorkspace,
     DiskChunkedRasterCellularAutomaton,
 )
 
-class LargeScaleGameOfLife(DiskChunkedRasterCellularAutomaton):
+# DiskChunkedRasterCellularAutomaton é um mixin cooperativo: precisa vir
+# primeiro no MRO, com uma classe real do dissmodel (aqui,
+# RasterCellularAutomaton) como segunda base — do contrário setup()
+# não tem para onde delegar via super() e a classe falha ao instanciar.
+class LargeScaleGameOfLife(DiskChunkedRasterCellularAutomaton, RasterCellularAutomaton):
     def rule(self, arrays: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         state = arrays["state"]
         neighbors = self.backend.focal_sum_mask(state == 1)

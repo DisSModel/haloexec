@@ -175,10 +175,23 @@ def save_workspace_to_geotiff(
         Sistema de referência de coordenadas.
     compress : str, default="lzw"
         Compressão do GeoTIFF.
+    Note
+    ----
+    GeoTIFF/GDAL exige um único dtype e um único nodata para TODAS as
+    bandas de um arquivo (limitação do formato, não deste código —
+    testado empiricamente: GDAL colapsa nodata por banda para um valor
+    só, mesmo passando valores distintos). Se `bands` misturar dtypes
+    ou nodata diferentes, esta função converte tudo para o dtype comum
+    (menor tipo que comporta todos, via `np.result_type`) e usa o
+    nodata da PRIMEIRA banda para o arquivo inteiro — e emite um aviso
+    (`warnings.warn`) sempre que isso descartar informação, em vez de
+    fazer silenciosamente. Se cada array precisa manter seu próprio
+    dtype/nodata, grave um GeoTIFF por array em vez de multibanda.
     """
     if not HAS_RASTERIO:
         raise ImportError("rasterio é necessário — pip install -e '.[geotiff]'")
 
+    import warnings
     from rasterio.transform import from_origin
 
     path = Path(path)
@@ -196,9 +209,40 @@ def save_workspace_to_geotiff(
     height, width = workspace.shape
     if transform is None:
         transform = from_origin(500_000.0, 9_700_000.0, 30.0, 30.0)
+        warnings.warn(
+            "save_workspace_to_geotiff: nenhum `transform` foi passado — "
+            "usando origem padrão arbitrária (500000, 9700000, 30x30m). "
+            "O GeoTIFF resultante NÃO estará georreferenciado corretamente "
+            "a menos que essa origem coincida com o domínio real. Passe "
+            "`transform=` explicitamente para dados reais.",
+            stacklevel=2,
+        )
 
-    common_dtype = np.result_type(*(np.dtype(dtype) for _, dtype, _ in parsed_bands))
+    distinct_dtypes = {dtype for _, dtype, _ in parsed_bands}
+    common_dtype = np.result_type(*(np.dtype(d) for d in distinct_dtypes))
+    if len(distinct_dtypes) > 1:
+        warnings.warn(
+            f"save_workspace_to_geotiff: bandas com dtypes distintos "
+            f"{sorted(distinct_dtypes)} — GeoTIFF exige um único dtype por "
+            f"arquivo, convertendo tudo para {common_dtype} (pode aumentar "
+            f"o tamanho do arquivo e/ou alterar a semântica de arrays "
+            f"categóricos). Para preservar dtypes, grave um GeoTIFF "
+            f"separado por array.",
+            stacklevel=2,
+        )
+
+    distinct_nodatas = {n for _, _, n in parsed_bands if n is not None}
     first_nodata = parsed_bands[0][2]
+    if len(distinct_nodatas) > 1:
+        warnings.warn(
+            f"save_workspace_to_geotiff: bandas com nodata distintos "
+            f"{sorted(distinct_nodatas)} — GeoTIFF só suporta um nodata "
+            f"por arquivo (limitação do GDAL, testado empiricamente: "
+            f"valores por banda são silenciosamente colapsados). Usando "
+            f"nodata da primeira banda ({first_nodata!r}) para o arquivo "
+            f"inteiro; as demais bandas ficam sem nodata correto.",
+            stacklevel=2,
+        )
 
     tiled_kwargs = {}
     if width >= 16 and height >= 16:
