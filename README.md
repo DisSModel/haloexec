@@ -1,40 +1,38 @@
 # haloexec
 
-Motor de execução de Autômatos Celulares por **Decomposição de
-Domínio** com **zonas de Halo** (Ghost Cell Pattern), integrado ao
-[dissmodel](https://pypi.org/project/dissmodel/) real via dependência
-pip — sem viver dentro da pasta do repo `dissmodel` core, que está
-atualmente sob revisão JOSS (issue #10827).
+Cellular Automaton execution engine using **Domain Decomposition** with
+**Halo Zones** (Ghost Cell Pattern), integrated with real
+[dissmodel](https://pypi.org/project/dissmodel/) via a pip dependency —
+without living inside the `dissmodel` core repository, which is
+currently under JOSS review (issue #10827).
 
 > [!NOTE]
-> **Complete English Documentation Available:**  
-> For the complete documentation in English covering API specifications, theory, architecture, and recipes, see the [`docs/`](docs/) directory:
-> - [**Documentation Index**](docs/README.md)
-> - [**Theory and Core Concepts**](docs/theory_and_concepts.md)
-> - [**Architecture & Design Patterns**](docs/architecture.md)
-> - [**API Reference**](docs/api_reference.md)
-> - [**Tutorials & Practical Recipes**](docs/tutorials_and_recipes.md)
+> **Full documentation:** see the [`docs/`](docs/) directory for the
+> complete reference — [Index](docs/README.md),
+> [Theory & Core Concepts](docs/theory_and_concepts.md),
+> [Architecture & Design Patterns](docs/architecture.md),
+> [API Reference](docs/api_reference.md),
+> [Tutorials & Recipes](docs/tutorials_and_recipes.md).
 
-## Motivação
+## Motivation
 
-O padrão bloco+halo usado no `chunked_engine.py` (BR-MANGUE,
-`dissmodel-ca`) não é específico a mangue nem a autômatos celulares em
-geral — é decomposição de domínio genérica para qualquer regra de
-transição com dependência de vizinhança local, sobre uma grade grande
-demais para caber inteira em RAM.
+The block+halo pattern is not specific to any single domain model or
+even to cellular automata in general — it is generic domain
+decomposition for any transition rule with a local neighborhood
+dependency, applied to a grid too large to fit entirely in RAM.
 
-O `dissmodel` core (0.6.3, PyPI) já tem `RasterCellularAutomaton`
-(`dissmodel.geo.raster.cellular_automaton`), com o contrato
-`rule(arrays: dict) -> dict`, mas **processa a grade inteira de uma
-vez** — não há chunking. `haloexec` preenche essa lacuna.
+`dissmodel` core (0.6.3, PyPI) already ships
+`RasterCellularAutomaton` (`dissmodel.geo.raster.cellular_automaton`)
+with the `rule(arrays: dict) -> dict` contract, but it **processes the
+whole grid at once** — there is no chunking. `haloexec` fills that gap.
 
-## Design: mesmo contrato de `rule()`
+## Design: same `rule()` contract
 
-`HaloChunkedRasterCellularAutomaton` estende `RasterCellularAutomaton`
-e mantém **exatamente o mesmo contrato de `rule()`** da classe base.
-Isso significa que qualquer regra já escrita para dissmodel roda em
-blocos+halo trocando apenas a classe base — zero mudança na lógica
-científica do modelo:
+`HaloChunkedRasterCellularAutomaton` extends `RasterCellularAutomaton`
+and preserves **exactly the same `rule()` contract** as the base
+class. Any rule already written for dissmodel runs in blocks+halo by
+swapping only the base class — zero change to the model's scientific
+logic:
 
 ```python
 import numpy as np
@@ -58,526 +56,397 @@ GameOfLife(backend=backend, block_h=50, block_w=50, halo=1)
 env.run()
 ```
 
-A mesma classe `GameOfLife`, herdando de `RasterCellularAutomaton`
-puro (sem `block_h`/`block_w`/`halo`), roda monoliticamente sem
-alteração de `rule()` — é exatamente essa propriedade que os testes de
-equivalência comprovam.
+The same `GameOfLife` class, inheriting from plain
+`RasterCellularAutomaton` (no `block_h`/`block_w`/`halo`), runs
+monolithically with no change to `rule()` — that property is exactly
+what the equivalence tests verify.
 
-## Como funciona internamente
+## How it works internally
 
 `HaloChunkedRasterCellularAutomaton.execute()`:
 
-1. Tira snapshot da grade global e aplica `np.pad` (halo global nas
-   bordas externas do domínio).
-2. Para cada bloco (`Block`/`make_blocks`, particionamento puro, sem
-   dependência de dissmodel), monta um `RasterBackend` temporário só
-   com a sub-grade+halo daquele bloco.
-3. Troca `self.backend` para o backend temporário do bloco — isso
-   garante que chamadas internas da regra como
-   `self.backend.focal_sum_mask(...)` operem sobre a forma **local**
-   correta (`focal_sum_mask` usa `self.shape` do backend ativo).
-4. Chama `self.rule(block_backend.snapshot())` — mesma assinatura de
-   sempre.
-5. Recorta o halo do resultado e escreve na posição correspondente da
-   grade global nova.
-6. Restaura `self.backend` para o backend global real.
+1. Snapshots the global grid and applies `np.pad` (global halo at the
+   domain's outer boundary).
+2. For each block (`Block`/`make_blocks`, pure partitioning, no
+   dissmodel dependency), builds a temporary `RasterBackend` holding
+   only that block's sub-grid+halo.
+3. Swaps `self.backend` for the block's temporary backend — this
+   guarantees that internal rule calls such as
+   `self.backend.focal_sum_mask(...)` operate on the correct **local**
+   shape (`focal_sum_mask` uses `self.shape` of the active backend).
+4. Calls `self.rule(block_backend.snapshot())` — same signature as
+   always.
+5. Trims the halo off the result and writes it into the corresponding
+   position of the new global grid.
+6. Restores `self.backend` to the real global backend.
 
-## Fundamentação teórica
+## Theoretical foundation
 
-- **Padrão de engenharia:** Kjolstad, F. B.; Snir, M. *Ghost Cell
+- **Engineering pattern:** Kjolstad, F. B.; Snir, M. *Ghost Cell
   Pattern*. In: Proceedings of the 2010 Workshop on Parallel
   Programming Patterns (ParaPLoP '10). ACM, 2010.
   https://doi.org/10.1145/1953611.1953615
-- **Aplicação direta em AC-LULC geoespacial:** Xia, W. et al. *Dynamic
-  Load Balancing Based on Hypergraph Partitioning for Parallel
-  Geospatial Cellular Automata Models*. ISPRS Int. J. Geo-Inf.,
-  14(3):109, 2025. https://doi.org/10.3390/ijgi14030109
+- **Direct application to geospatial LULC-CA:** Xia, W. et al.
+  *Dynamic Load Balancing Based on Hypergraph Partitioning for
+  Parallel Geospatial Cellular Automata Models*. ISPRS Int. J.
+  Geo-Inf., 14(3):109, 2025. https://doi.org/10.3390/ijgi14030109
 
-## Instalação (desenvolvimento)
+## Installation (development)
 
 ```bash
 pip install -e ".[dev]"
 pytest
 ```
 
-Depende de `dissmodel>=0.6.3` (PyPI) como dependência real de runtime.
+Depends on `dissmodel>=0.6.3` (PyPI) as a real runtime dependency.
 
-> **Nota:** `examples/brmangue_validation/` (scripts, testes de
-> equivalência e fixtures que validavam contra o dataset real da Ilha
-> do Maranhão e o golden do TerraME) foi removido desta branch — o
-> modelo BR-MANGUE (`brmangue-dissmodel`) ainda está em construção
-> ativa, e o exemplo dependia de uma versão específica dele. Os
-> "Achados" abaixo permanecem documentados porque continuam válidos
-> tecnicamente (o bug e a causa raiz não mudam), mas os caminhos de
-> arquivo que citam (`examples/brmangue_validation/...`) não existem
-> mais neste repositório — servem como registro histórico da
-> investigação, não como referência executável.
+## Finding: `boundary_value=0` is not safe for every domain
 
-## Achado: `boundary_value=0` não é seguro para todo domínio
+Not every domain can safely default the halo's outer boundary fill to
+`0`. If `0` is a **valid class code** for some array (say, a land-use
+class or a channel type — not a "no data" sentinel), filling the
+domain's outer edge with `0` creates phantom migration sources at that
+edge that don't exist in the monolithic run. This surfaced in testing
+even with a **single block covering the entire grid** — i.e., it was
+never a block-to-block boundary bug, it was an outer-domain-edge
+fill bug.
 
-Ao validar contra `MangroveModel` (não só `FloodModel`), um teste
-revelou 62 células divergentes em `solo` mesmo com um único bloco
-cobrindo a grade inteira — ou seja, **não era bug de fronteira entre
-blocos**, era bug de preenchimento da borda externa do domínio.
-
-Causa: `SOLO_CANAL_FLUVIAL = 0` é um código de solo **válido** no
-domínio BR-MANGUE (está inclusive em `SOIL_SOURCES`). Usar `0` como
-valor de halo na borda externa cria fontes de migração fantasmas ali,
-inexistentes no monolítico. `TIFF_BANDS` do domínio já define o nodata
-correto por array (`uso`: 0, `alt`: -9999.0, `solo`: -1) — só não
-estava sendo respeitado pelo motor de halo.
-
-**Fix:** `boundary_value` em todas as camadas (`sync_model.py`,
-`dissmodel_ca.py`, `disk_backend.py`) agora aceita um `dict {nome: valor}`
-além de escalar, via `engine.resolve_boundary_value()`. Nomes
-`"<nome>_past"` caem automaticamente para o valor do nome base se não
-tiverem entrada própria — sem esse fallback, o bug reaparecia de forma
-mais sutil (o `"_past"` gerado por `synchronize()` continuava usando
-`0` mesmo com `{"solo": -1}` configurado, já que a chave procurada era
-literalmente `"solo_past"`).
+**Fix:** `boundary_value` at every layer now accepts a
+`dict {name: value}` in addition to a scalar, via
+`engine.resolve_boundary_value()`. Names ending in `"_past"`
+automatically fall back to the base name's value if they have no entry
+of their own — without that fallback, the bug reappeared in a subtler
+form (the `"_past"` array generated by `synchronize()` kept using `0`
+even with `{"class_code": -1}` configured, since the key being looked
+up was literally `"class_code_past"`).
 
 ```python
-boundary_value = {"uso": 0, "alt": -9999.0, "solo": -1}
-MangroveModelHalo(backend=backend, taxa_elevacao=0.05,
-                   block_h=10, block_w=10, halo=1,
-                   boundary_value=boundary_value)
+boundary_value = {"land_use": 0, "elevation": -9999.0, "soil_class": -1}
+MyModelHalo(backend=backend, block_h=10, block_w=10, halo=1,
+            boundary_value=boundary_value)
 ```
 
-Sempre que um domínio usar `0` como código de classe válido em algum
-array, `boundary_value` **precisa** ser um dict alinhado ao nodata real
-daquele array — nunca confiar no default escalar `0`.
+Whenever a domain uses `0` as a valid class code in some array,
+`boundary_value` **must** be a dict aligned to that array's real
+nodata value — never rely on the scalar default of `0`.
 
-## Achado: halo=1 é insuficiente para `FloodModel` — precisa de halo=2
+## Finding: the correct halo depth is the dependency chain's depth, not the rule's nominal shift radius
 
-Validando contra o **dataset real** da Ilha do Maranhão (não sintético)
-e comparando contra o golden do TerraME
-(`examples/brmangue_validation/validate_against_terrame.py`), `alt`
-divergiu do monolítico mesmo com `boundary_value` já corrigido — 91
-células no passo 1, crescendo para 1431 no passo 19. `uso`/`solo`
-continuavam perfeitos.
+The most consequential lesson from validating this engine against a
+real (not synthetic) dataset: **halo depth is not the same thing as
+neighborhood radius**.
 
-**Causa:** `FloodModel.execute()` computa `viz_baixos` (quantos
-vizinhos têm elevação ≤ a própria célula) e deriva `fluxo` disso. O
-update de uma célula usa `fluxo_viz` — **o fluxo do vizinho**, que por
-sua vez depende dos **vizinhos do vizinho**. É uma dependência de 2
-saltos, não 1: com `halo=1`, o `fluxo` calculado no próprio anel de
-halo já está errado (seus vizinhos de 2 saltos foram zero-padded pelo
-`shift2d` local), e esse erro contamina o núcleo do bloco.
+A rule that only reads a **raw** neighbor value (e.g., "is this cell
+adjacent to water?") has a 1-hop dependency — `halo=1` is enough. But
+a rule that reads a **derived quantity computed from neighbors** (e.g.,
+"how many of my neighbors have a lower elevation, and what do *their*
+neighbors look like") has a 2-hop dependency, not 1 — with `halo=1`,
+the derived quantity computed inside the block's own halo ring is
+already wrong (its own 2-hop neighbors were zero-padded by the local
+shift), and that error contaminates the block's core on write-back.
 
-Os testes sintéticos anteriores (`examples/brmangue_validation/test_flood_model_equivalence.py`)
-não pegaram isso porque sempre colocavam a fonte de inundação (`MAR`)
-numa coluna inteira **na borda do domínio** — onde o artefato de
-zero-padding já existe igualmente nos dois lados (monolítico e halo).
-O bug só aparece quando uma célula-fonte está perto de uma fronteira
-**interna** de bloco, o que só aconteceu com a costa irregular real.
+In a real hydrological flow model validated this way, this showed up
+as dozens of divergent cells in the first time step, growing into the
+thousands by step 19 — even after the `boundary_value` fix above was
+already applied. The root cause was exactly this: the model computed a
+"how many lower neighbors do I have" quantity and then used the
+**neighbor's** version of that same quantity to derive flow — a 2-hop
+read hiding behind what looked like a 1-hop rule.
 
-`MangroveModel`, em contraste, só verifica associação direta a um
-conjunto (dependência de 1 salto) — `halo=1` é suficiente para ele,
-confirmado nos próprios testes.
+**Why synthetic tests can miss this entirely:** if a synthetic test
+always places its source condition in a full column or row **at the
+domain's outer edge**, the zero-padding artifact from `halo=1`
+already exists equally on both sides (monolithic and block+halo) at
+that edge — the bug only appears when a source condition sits near an
+**internal** block boundary, which typically only happens with real,
+irregularly-shaped domains.
 
-**Fix:** nenhuma mudança de código — `halo` é responsabilidade de quem
-configura o modelo, não algo que o motor possa inferir sozinho. O que
-mudou foi a documentação (`sync_model.py`) alertando explicitamente
-sobre dependências de 2+ saltos, e um teste de regressão
-(`examples/brmangue_validation/test_flood_model_halo_depth_regression.py`, usando uma fixture
-recortada 30x30 do dataset real) que trava `halo=1` como insuficiente
-e `halo=2` como correto para este modelo especificamente.
+**Fix:** there is no code fix for this — `halo` depth is the
+responsibility of whoever configures the model, not something the
+engine can infer on its own from the rule's source code. What changed
+was making this dependency explicit in documentation, plus a
+regression test that pins `halo=1` as insufficient and `halo=2` as
+correct for that specific model.
 
-**Lição geral:** o halo correto não é o raio nominal do `shift` usado
-pela regra — é a profundidade real da cadeia de dependências. Se a
-regra lê uma quantidade derivada de vizinhos (não o valor bruto) de
-outra célula, a dependência é de N+1 saltos, não N. Testes sintéticos
-com fontes só na borda do domínio podem mascarar esse problema —
-validação contra dado real irregular é o que expõe.
+**General takeaway:** the correct halo is not the nominal radius of
+the `shift` operation used inside the rule — it is the real depth of
+the dependency chain. If a rule reads a quantity *derived from*
+neighbors (rather than a neighbor's raw value), the dependency is
+N+1 hops, not N. Synthetic tests with sources only at the domain's
+outer boundary can mask this; validation against real, irregular data
+is what tends to expose it.
 
-## Duas opções de entrada: GeoTIFF/VRT ou Zarr
+## Two input paths: GeoTIFF/VRT or Zarr
 
-`geotiff_io.py`/`mosaic_io.py` (TIFF/VRT, via `rasterio`) e `zarr_io.py`
-(via `zarr`) são caminhos de entrada **intercambiáveis** — ambos
-populam o mesmo `MemmapRasterWorkspace`, bloco a bloco, sem
-materializar o array inteiro em RAM. Troca-se o loader; o resto do
-pipeline (halo, disco, modelos) não muda.
+`geotiff_io.py`/`mosaic_io.py` (TIFF/VRT, via `rasterio`) and
+`zarr_io.py` (via `zarr`) are **interchangeable** input paths — both
+populate the same `MemmapRasterWorkspace`, block by block, without
+materializing the full array in RAM. Swap the loader; the rest of the
+pipeline (halo, disk, models) doesn't change.
 
-- **GeoTIFF/VRT**: para dado que já está em raster tradicional, ou
-  para mosaicos de tiles (ver seção "Mosaico de tiles" acima).
-- **Zarr**: pensado para consumir `DerivedVariable` do
-  [disscube](https://github.com/DisSModel/disscube) diretamente — que
-  já armazena nativamente em Zarr, já alinhado à grade mestra pelo seu
-  `GridAligner` (com resampling por-operador e alinhamento fino para
-  variáveis categóricas — mais rigoroso que fazer isso na mão).
-  Suporta tanto um grupo com várias variáveis (`variable_map` opcional
-  se os nomes diferirem) quanto um array único, e variáveis com
-  dimensão temporal (`time_index`, o "Temporal Backend" do disscube).
+- **GeoTIFF/VRT**: for data already in traditional raster form, or for
+  tile mosaics (see "Tile mosaics" below).
+- **Zarr**: designed to consume `DerivedVariable` directly from
+  [disscube](https://github.com/DisSModel/disscube) — which already
+  stores data natively in Zarr, already aligned to the master grid via
+  its `GridAligner` (per-operator resampling and fine alignment for
+  categorical variables — more rigorous than doing this by hand).
+  Supports both a group with multiple variables (`variable_map`
+  optional if names differ) and a single array, plus variables with a
+  time dimension (`time_index`, disscube's "Temporal Backend").
 
 ```python
 from haloexec import MemmapRasterWorkspace, load_zarr_into_workspace
 
-ws = MemmapRasterWorkspace.create(root="workspace", shape=(altura, largura),
-                                   arrays={"uso": np.int16, "alt": np.float32},
+ws = MemmapRasterWorkspace.create(root="workspace", shape=(height, width),
+                                   arrays={"land_use": np.int16, "elevation": np.float32},
                                    block_h=512, block_w=512, halo=1)
 load_zarr_into_workspace(ws, "data/derived/BDC_100m/009002/abc123/",
-                          variable_map={"uso": "land_use", "alt": "elevation"})
+                          variable_map={"land_use": "land_use", "elevation": "elevation"})
 ```
 
-Requer o extra opcional `zarr` (`pip install -e ".[zarr]"`).
+Requires the optional `zarr` extra (`pip install -e ".[zarr]"`).
 
-## Mosaico de tiles (múltiplos arquivos de satélite)
+## Tile mosaics (multiple satellite files)
 
-Resolvido por um pacote **separado**:
-[`geomosaic`](https://github.com/LambdaGeo/geomosaic) — descoberta de
-tiles, validação de contrato de grade, e construção de VRT, sem
-nenhuma dependência de `haloexec`. Mosaico é estritamente anterior a
-qualquer motor de execução; o `haloexec` não sabe (nem precisa saber)
-que existe mosaico por baixo — um VRT se abre com `rasterio.open()`
-exatamente como um GeoTIFF comum, inclusive para blocos que cruzam a
-fronteira entre tiles.
+Handled by a **separate** package:
+[`geomosaic`](https://github.com/LambdaGeo/geomosaic) — tile
+discovery, grid contract validation, and VRT construction, with no
+dependency on `haloexec`. Mosaicking strictly precedes any execution
+engine; `haloexec` doesn't know (and doesn't need to know) that a
+mosaic exists underneath — a VRT opens via `rasterio.open()` exactly
+like a plain GeoTIFF, including for blocks that straddle a tile
+boundary.
 
 ```python
 from geomosaic import discover_tiles, build_mosaic_contract, write_vrt
 from haloexec import MemmapRasterWorkspace, load_geotiff_into_workspace
 
-tiles = discover_tiles("dados/mapbiomas_tiles/")
+tiles = discover_tiles("data/mapbiomas_tiles/")
 contract = build_mosaic_contract(tiles)
-vrt_path = write_vrt(contract, "dados/mosaico.vrt")
+vrt_path = write_vrt(contract, "data/mosaic.vrt")
 
 ws = MemmapRasterWorkspace.create(root="workspace", shape=(contract.mosaic_height, contract.mosaic_width),
-                                   arrays={"uso": np.int16}, block_h=512, block_w=512, halo=1)
-load_geotiff_into_workspace(ws, vrt_path, [("uso", "int16", 0)])
+                                   arrays={"land_use": np.int16}, block_h=512, block_w=512, halo=1)
+load_geotiff_into_workspace(ws, vrt_path, [("land_use", "int16", 0)])
 ```
 
-`tests/test_geomosaic_integration.py` prova essa integração (requer o
-extra opcional `geomosaic`, usado só em teste — nunca importado pelo
-código de runtime do `haloexec`).
+`tests/test_geomosaic_integration.py` proves this integration
+(requires the optional `geomosaic` extra, used only in the test —
+never imported by `haloexec`'s runtime code).
 
-## Carregando GeoTIFF direto pra disco
+## Loading GeoTIFF straight to disk
 
-`geotiff_io.py` (`load_geotiff_into_workspace`) carrega um GeoTIFF real
-bloco a bloco direto para um `MemmapRasterWorkspace`, via
-`rasterio.windows.Window` — nunca materializa uma banda inteira em RAM.
-Generaliza o mesmo padrão usado em um protótipo de aluno
-(`chunked_engine.py`), mas usando a convenção `band_spec` já
-estabelecida em `dissmodel.io.raster.load_geotiff` (lista de
-`(nome, dtype, nodata)`) em vez de nomes de banda hardcoded.
+`geotiff_io.py` (`load_geotiff_into_workspace`) loads a real GeoTIFF
+block by block directly into a `MemmapRasterWorkspace`, via
+`rasterio.windows.Window` — never materializing a whole band in RAM.
+It uses the `band_spec` convention already established by
+`dissmodel.io.raster.load_geotiff` (a list of `(name, dtype, nodata)`)
+instead of hardcoded band names.
 
 ```python
 from haloexec import MemmapRasterWorkspace, load_geotiff_into_workspace
 
 ws = MemmapRasterWorkspace.create(
-    root="/dados/workspace", shape=(altura, largura),
-    arrays={"uso": np.int16, "alt": np.float32, "solo": np.int16, "mask": np.uint8},
+    root="/data/workspace", shape=(height, width),
+    arrays={"land_use": np.int16, "elevation": np.float32, "soil_class": np.int16, "mask": np.uint8},
     block_h=512, block_w=512, halo=2,
 )
-load_geotiff_into_workspace(ws, "dominio.tif", TIFF_BANDS + [("mask","uint8",0)])
+load_geotiff_into_workspace(ws, "domain.tif", BAND_SPEC + [("mask", "uint8", 0)])
 ```
 
-Requer o extra opcional `geotiff` (`pip install -e ".[geotiff]"`).
-Validado (`tests/test_geotiff_io_equivalence.py`) com round-trip exato
-contra leitura direta com rasterio, incluindo blocos irregulares e
-bloco maior que a grade.
+Requires the optional `geotiff` extra (`pip install -e ".[geotiff]"`).
+Validated (`tests/test_geotiff_io_equivalence.py`) with an exact
+round-trip against direct rasterio reads, including irregular blocks
+and a block larger than the grid.
 
-## ⚠️ Problema aberto: disco + Flood+Mangrove combinados no dataset real diverge em `alt`
+## Iterative convergence (unbounded spatial dependency)
 
-Ao validar `examples/brmangue_validation/validate_against_terrame_disk.py`
-contra o dataset real completo (323×349, máscara irregular real),
-`alt` diverge (~300 células de 112.727, crescendo com os passos)
-quando `FloodModel`+`MangroveModel` rodam **combinados no mesmo
-workspace em disco**. `uso`/`solo` continuam perfeitos.
+`convergence.py` (`sweep_until_convergence`) solves a DIFFERENT
+problem from what a fixed-size halo solves: connectivity, flow
+routing, watershed delineation — where a cell's value can, in
+principle, depend on the entire domain, not just its immediate
+neighbors.
 
-**O que já foi descartado como causa** (testado e refutado
-empiricamente, não por suposição):
-- **Não é halo insuficiente** — idêntico com halo=2, 3 e 4.
-- **Não é `boundary_value`** — idêntico com `alt`=0 ou `alt`=-9999.
-- **Não é chunking** — persiste mesmo com um único bloco cobrindo o
-  domínio inteiro.
-- **Não é o carregamento do TIFF** — round-trip verificado bit-exato
-  para todos os arrays, incluindo `alt`, antes de rodar qualquer modelo.
-- **Não é o bug de `_past` órfão** já corrigido — persiste mesmo depois
-  do fix, e o teste de regressão sintética para esse bug específico
-  continua passando (0 diff), então não é uma regressão dele.
-
-**O que ainda não foi isolado:** a divergência aparece comparando
-RAM-halo (bloco único) vs. disco-halo (bloco único) com os MESMOS
-dados de entrada — ou seja, é algo na mecânica do
-`DiskChunkedSyncRasterModel` que difere do `HaloChunkedSyncRasterModel`
-mesmo no caso degenerado sem chunking real, e só se manifesta com o
-dataset real grande/com máscara irregular — não aparece em nenhum
-teste sintético da suíte, incluindo o teste de combinação Flood+Mangrove
-em disco (`examples/brmangue_validation/test_disk_combined_models_regression.py`), que não incluía
-uma máscara irregular real.
-
-**Não travei isso em teste de regressão ainda** porque não sei
-reproduzir a causa raiz de forma mínima — reproduzir exige o dataset
-real completo. Antes de confiar no caminho disco para os dois modelos
-combinados em produção, este problema precisa ser resolvido.
-Individualmente, cada modelo no caminho disco está validado (ver
-`examples/brmangue_validation/test_disk_flood_model_equivalence.py`,
-`examples/brmangue_validation/test_disk_mangrove_model_equivalence.py`) — a lacuna é especificamente
-a combinação dos dois no dataset real.
-
-## Testando contra o TerraME (dataset real)
-
-`examples/brmangue_validation/` traz o dataset real da Ilha do
-Maranhão (`elevacao_pol.zip`, 50.496 células, grade 323×349) e os 20
-CSVs golden do TerraME (Bezerra 2014), junto com um script que roda
-`FloodModel`+`MangroveModel` monolítico e em blocos+halo, comparando
-ambos contra o TerraME e um contra o outro:
-
-```bash
-python examples/brmangue_validation/validate_against_terrame.py \
-    --end-time 19 --checkpoints 1 5 10 15 19 \
-    --block-h 64 --block-w 64 --halo 2
-```
-
-Resultado esperado: `uso`/`solo` 100% idênticos entre monolítico e
-halo em todos os passos; `alt` idêntico até tolerância de ponto
-flutuante (1e-9); ambas as variantes batem com o TerraME na mesma
-proporção (~97-100%, a pequena deriva em `alt` é drift de ponto
-flutuante Python vs. Lua, não um bug — documentado no
-`brmangue-dissmodel` original).
-
-**Nota de escopo:** o resultado acima (100% de equivalência) vale para
-o caminho **RAM** (`validate_against_terrame.py`). O caminho **disco**
-combinando os dois modelos no dataset real tem uma divergência residual
-não resolvida em `alt` — ver "⚠️ Problema aberto" acima antes de usar
-`validate_against_terrame_disk.py` como prova de correção.
-
-## Convergência iterativa (dependência espacial não-limitada)
-
-`convergence.py` (`sweep_until_convergence`) resolve um problema
-DIFERENTE do que halo de tamanho fixo resolve: conectividade,
-roteamento de fluxo, delineação de bacia — onde o valor de uma célula
-pode depender, em princípio, do domínio inteiro, não só dos vizinhos
-imediatos.
-
-Generalizado de um protótipo de aluno
-(`chunked_engine.py::propagar_conectividade`, conectividade de maré via
-`scipy.ndimage.binary_propagation`), mas a regra específica dele NÃO
-faz parte desta primitiva — só o padrão de orquestração foi extraído:
-halo pequeno + repetição de varreduras globais até nenhum bloco mudar,
-em vez de halo grande de uma vez. Cada varredura escreve o resultado
-**imediatamente** de volta (Gauss-Seidel, via
-`write_block_core_in_place` — sem ping-pong), então um bloco processado
-depois já enxerga a atualização de um bloco processado antes na mesma
-varredura, acelerando a convergência.
+Generalized from a domain-specific student prototype (tidal
+connectivity via `scipy.ndimage.binary_propagation`), though that
+prototype's specific rule is not part of this primitive — only the
+orchestration pattern was extracted: a small halo plus repeated global
+sweeps until no block changes, instead of one large halo. Each sweep
+writes its result **immediately** back (Gauss-Seidel, via
+`write_block_core_in_place` — no ping-pong), so a block processed
+later in the same sweep already sees the update from a block processed
+earlier, accelerating convergence.
 
 ```python
 from haloexec import MemmapRasterWorkspace, sweep_until_convergence
 from scipy.ndimage import binary_propagation
 
-def regra_conectividade(window, halo=1):
-    conectado = window["conectado"].astype(bool)
-    permeavel = window["permeavel"].astype(bool)
-    propagado = binary_propagation(conectado, mask=permeavel)
-    return {"conectado": propagado[halo:-halo, halo:-halo].astype(np.uint8)}
+def connectivity_rule(window, halo=1):
+    connected = window["connected"].astype(bool)
+    permeable = window["permeable"].astype(bool)
+    propagated = binary_propagation(connected, mask=permeable)
+    return {"connected": propagated[halo:-halo, halo:-halo].astype(np.uint8)}
 
-info = sweep_until_convergence(ws, regra_conectividade, boundary_value=0)
+info = sweep_until_convergence(ws, connectivity_rule, boundary_value=0)
 # info = {"sweeps": N, "blocks_changed_total": M, "converged": True}
 ```
 
-**Validado contra o que faltava no original:** `tests/test_convergence.py`
-prova que a versão em blocos+varreduras converge para o resultado
-**exatamente idêntico** a um `binary_propagation` monolítico rodado no
-domínio inteiro de uma vez — em 4 configurações de bloco (incluindo um
-labirinto de permeabilidade forçando a conectividade a atravessar
-várias fronteiras de bloco antes de convergir) + 5 seeds de estresse +
-caso de não-convergência (deve estourar `RuntimeError`, não travar
-silenciosamente). O protótipo original nunca teve essa prova.
+**Validated against what the original prototype lacked:**
+`tests/test_convergence.py` proves the blocks+sweeps version converges
+to a result **exactly identical** to a monolithic `binary_propagation`
+run on the whole domain at once — across 4 block configurations
+(including a permeability maze forcing connectivity to cross several
+block boundaries before converging) plus 5 stress seeds and a
+non-convergence case (must raise `RuntimeError`, not hang silently).
+The original prototype never had this kind of proof.
 
-## Por que os testes do BR-MANGUE ficam em `examples/`, não em `tests/`
-
-`brmangue-dissmodel` é um repositório externo que pode mudar ou deixar
-de existir — os 6 arquivos de equivalência que dependem dele
-(`examples/brmangue_validation/test_*.py`) ficam fora de `tests/` de
-propósito, para não fazerem parte da suíte padrão (`pytest`, sem
-argumento, só olha `tests/` — configurado via `testpaths` no
-`pyproject.toml`). Continuam rodáveis explicitamente
-(`pytest examples/brmangue_validation/`), e continuam sendo testes de
-verdade (com `assert`), não só scripts — só não fazem parte do
-compromisso de manutenção contínua do `haloexec` em si.
-
-## Exemplos didáticos (`examples/`)
+## Educational examples (`examples/`)
 
 - **`examples/gol_patterns/gol_patterns_haloexec.py`** — Game of Life
-  com padrões clássicos (glider, blinker, beacon, toad, block, pulsar)
-  posicionados deliberadamente sobre fronteiras de bloco, via
-  `dissmodel_ca` (`PATTERNS`) e `dissmodel.visualization.RasterMap`.
-  `tests/test_gol_patterns_example.py` prova a equivalência
-  monolítico-vs-blocos do mesmo cenário (achado no processo: as
-  coordenadas originais tinham `beacon` sobreposto ao `pulsar` —
-  `place()` sobrescreve silenciosamente, sem erro; corrigido).
+  with classic patterns (glider, blinker, beacon, toad, block, pulsar)
+  deliberately positioned across block boundaries, via `dissmodel_ca`
+  (`PATTERNS`) and `dissmodel.visualization.RasterMap`.
+  `tests/test_gol_patterns_example.py` proves monolithic-vs-blocks
+  equivalence for the same scenario (found in the process: the
+  original coordinates had `beacon` overlapping `pulsar` — `place()`
+  silently overwrites, with no error; fixed).
 
-## Testes de equivalência
+## Equivalence tests
 
-`tests/test_gameoflife_from_geotiff.py` fecha o ciclo mosaico→TIFF→disco→halo
-com um modelo simples: Game of Life carregado de um GeoTIFF (simulando
-um mosaico já materializado) direto para `MemmapRasterWorkspace`,
-incluindo um caso "grande" (2000×2000 = 4 milhões de células). Antes
-deste teste, TIFF só era validado por round-trip (sem rodar nenhum
-modelo em cima) e Game of Life só era testado com dado sintético em
-RAM/disco — nunca os dois juntos.
+`tests/test_gameoflife_from_geotiff.py` closes the loop
+mosaic→TIFF→disk→halo with a simple model: Game of Life loaded from a
+GeoTIFF (simulating an already-materialized mosaic) straight into
+`MemmapRasterWorkspace`, including a "large" case
+(2000×2000 = 4 million cells). Before this test, TIFF was only
+validated by round-trip (without running any model on top of it), and
+Game of Life was only tested with synthetic data in RAM/disk — never
+the two together.
 
-`tests/test_equivalence.py` prova, usando `Environment`/`RasterBackend`
-reais do dissmodel (não um harness isolado), que o resultado de
-`GameOfLifeHalo` (blocos+halo) é idêntico célula a célula ao de
-`GameOfLifeMono` (monolítico) após N passos de tempo, em 9 configurações
-distintas (grade divisível exatamente, com resto, blocos de 1 linha,
-bloco maior que a grade, e stress com 5 seeds aleatórias).
+`tests/test_equivalence.py` proves, using real dissmodel
+`Environment`/`RasterBackend` (not an isolated harness), that the
+result of `GameOfLifeHalo` (blocks+halo) is cell-for-cell identical to
+`GameOfLifeMono` (monolithic) after N time steps, across 9 distinct
+configurations (evenly divisible grid, grid with remainder, 1-row
+blocks, a block larger than the grid, and a stress case with 5 random
+seeds).
 
-`examples/brmangue_validation/test_flood_model_equivalence.py` faz o mesmo com o `FloodModel`
-**real e inalterado** do
-[`brmangue-dissmodel`](https://github.com/DisSModel/brmangue-dissmodel),
-via `HaloChunkedSyncRasterModel` (herança múltipla cooperativa — nenhuma
-linha do `FloodModel` é modificada). Requer o extra opcional `brmangue`:
+## Disk layer (grids larger than RAM)
 
-```bash
-pip install -e ".[dev,brmangue]"
-pytest examples/brmangue_validation/test_flood_model_equivalence.py -v
-```
+`disk_backend.py` (`MemmapRasterWorkspace`) and `disk_sync_model.py`
+(`DiskChunkedSyncRasterModel`) generalize the same domain decomposition
+for grids that don't fit in memory, using `np.memmap` with
+double-buffering and checkpointing. **No dependency on dissmodel** in
+`disk_backend.py` — reusable by any framework.
 
-**Escopo deste teste:** verifica apenas que rodar em blocos produz o
-mesmo resultado que rodar monoliticamente, usando dado sintético — não
-valida a correção científica do `FloodModel` contra o golden TerraME
-(há pendências de validação conhecidas, registradas separadamente e
-fora do escopo deste pacote). Equivalência bloco-vs-monolítico e
-correção científica são propriedades independentes.
-
-`tests/test_disk_backend_equivalence.py` e
-`examples/brmangue_validation/test_disk_flood_model_equivalence.py` fazem o mesmo teste, mas
-via `MemmapRasterWorkspace`/`DiskChunkedSyncRasterModel` — a grade
-nunca é materializada inteira em memória (leitura direta de blocos+halo
-do disco, com recorte nas bordas em vez de padding). O segundo é o
-teste mais forte do pacote: `FloodModel` real rodando inteiramente por
-disco, com sincronização "_past" bloco a bloco, resultado idêntico ao
-monolítico.
-
-`examples/brmangue_validation/test_mangrove_model_equivalence.py` e
-`examples/brmangue_validation/test_disk_mangrove_model_equivalence.py` fazem o mesmo com
-`MangroveModel` (RAM e disco respectivamente) — incluindo um caso com
-`acrecao_ativa=True` (exercita o ramo que lê `alt_past` e escreve
-`alt`, não coberto pelos casos default). Foi nesse teste que o bug de
-`boundary_value` documentado acima foi encontrado.
-
-## Camada de disco (grades maiores que a RAM)
-
-`disk_backend.py` (`MemmapRasterWorkspace`) e `disk_sync_model.py`
-(`DiskChunkedSyncRasterModel`) generalizam a mesma decomposição de
-domínio para grades que não cabem em memória, usando `np.memmap` com
-double-buffer e checkpoint. **Sem dependência de dissmodel** no
-`disk_backend.py` — reutilizável por qualquer framework.
-
-Extraído e generalizado de um protótipo de aluno (`chunked_engine.py`,
-pipeline de pré-processamento BR-MANGUE) que tinha memmap+double-buffer
-+checkpoint corretos, mas amarrados a nomes de estado específicos do
-domínio. Aqui os arrays são nomeados genericamente (dict `nome->dtype`),
-sem nenhum acoplamento a "papel"/"uso"/"alt" ou a qualquer domínio.
+Extracted and generalized from a student prototype (a domain-specific
+preprocessing pipeline) that already had correct memmap+double-buffer
++checkpoint mechanics, but tied to domain-specific state names. Here
+arrays are named generically (a `name -> dtype` dict), with no coupling
+to any particular domain's variable names.
 
 ```python
 from haloexec import DiskChunkedSyncRasterModel, MemmapRasterWorkspace, workspace_arrays_for_sync_model
 
-class FloodModelDiskHalo(DiskChunkedSyncRasterModel, FloodModel):
+class MyModelDiskHalo(DiskChunkedSyncRasterModel, MyModel):
     pass
 
 arrays = workspace_arrays_for_sync_model(
-    base={"uso": np.int16, "alt": np.float32},
-    land_use_types=["uso", "alt"],
+    base={"land_use": np.int16, "elevation": np.float32},
+    land_use_types=["land_use", "elevation"],
 )
-ws = MemmapRasterWorkspace.create(root="/dados/workspace", shape=(50000, 50000),
+ws = MemmapRasterWorkspace.create(root="/data/workspace", shape=(50000, 50000),
                                    arrays=arrays, block_h=512, block_w=512, halo=1)
-ws.fill("uso", uso_inicial)
-ws.fill("alt", alt_inicial)
+ws.fill("land_use", initial_land_use)
+ws.fill("elevation", initial_elevation)
 
 env = Environment(start_time=1, end_time=100)
-FloodModelDiskHalo(workspace=ws, taxa_elevacao=0.05)
+MyModelDiskHalo(workspace=ws)
 env.run()
 ```
 
-**Ponto técnico central:** `SyncRasterModel.synchronize()` (que gera os
-arrays `"<nome>_past"`) faz `.copy()` do array inteiro — se aplicado
-ingenuamente sobre um memmap, materializaria a grade inteira em RAM.
-`DiskChunkedSyncRasterModel` replica essa lógica localmente (não
-importa nem modifica o `dissmodel` instalado), copiando bloco a bloco.
-Isso é o trecho a reconciliar quando este pacote migrar para o core.
+**Central technical point:** `SyncRasterModel.synchronize()` (which
+generates the `"<name>_past"` arrays) does a `.copy()` of the whole
+array — applied naively to a memmap, that would materialize the whole
+grid in RAM. `DiskChunkedSyncRasterModel` replicates that logic
+locally (without importing or modifying installed `dissmodel`),
+copying block by block. This is the piece to reconcile when this
+package eventually migrates into core.
 
-## Esparsidade e custo de disco (memmap resolve RAM, não disco)
+## Sparsity and disk cost (memmap solves RAM, not disk)
 
-Vale separar dois custos que se confundem com facilidade:
+Worth separating two costs that are easy to conflate:
 
-- **RAM** — resolvido pelo `np.memmap`: o kernel traz páginas sob demanda,
-  então percorrer a grade inteira nunca a materializa de uma vez. Medido
-  com dado real (grade de 371 M células, dois arrays `float32`): pico de
-  3,0 GB de RSS para um workspace de 5,6 GB.
-- **Disco** — o memmap não ajuda, e nem deveria: arquivo é arquivo.
+- **RAM** — solved by `np.memmap`: the kernel brings in pages on
+  demand, so iterating over the whole grid never materializes it all
+  at once. Measured with real data (a 371M-cell grid, two `float32`
+  arrays): peak RSS of 3.0 GB for a 5.6 GB workspace.
+- **Disk** — memmap doesn't help here, nor should it: a file is a
+  file.
 
-Para o disco, `create()` dimensiona os `.dat` **sem pré-escrever zeros**,
-então eles nascem esparsos: só o que for escrito ocupa blocos. Ler região
-nunca escrita continua devolvendo zero — garantia do POSIX, idêntica ao
-que a pré-escrita dava, então a semântica não mudou (ver
-`tests/test_disk_backend_sparse.py`, que fixa as duas metades). Medido:
-um array de 4000×4000 `float64` sai de 122 MB reais para 0 MB até que
-algo seja escrito.
+For disk, `create()` sizes the `.dat` files **without pre-writing
+zeros**, so they start out sparse: only what gets written occupies
+disk blocks. Reading a never-written region still returns zero — a
+POSIX guarantee, identical to what pre-writing zeros gave, so the
+semantics haven't changed. Measured: a 4000×4000 `float64` array goes
+from 122 MB of real disk usage to 0 MB until something is written.
 
-**O limite dessa economia**, e por que ela não é automática: ela só
-aparece se quem carrega *deixar blocos sem escrever*. Um carregador que
-preenche todo bloco — inclusive os vazios, com um sentinela como `NaN` —
-torna o arquivo denso de novo. E deixar de escrever significa que aquela
-região vale **zero**, não "ausente". Para domínios em que `0` é válido
-(um código de classe, uma elevação ao nível do mar) os dois casos ficam
-indistinguíveis.
+**The limit of this saving**, and why it isn't automatic: it only
+shows up if the loader *leaves blocks unwritten*. A loader that fills
+every block — including empty ones, with a sentinel like `NaN` — makes
+the file dense again. And leaving a region unwritten means that region
+reads as **zero**, not "absent". For domains where `0` is a valid
+value (a class code, sea-level elevation) the two cases become
+indistinguishable.
 
-Caso real que expôs isso: um domínio costeiro em malha BDC, 15 tiles com
-dado dentro de um retângulo de 5×6 posições. Metade das posições nunca
-teve tile, e os tiles que têm dado são parcialmente vazios por dentro
-(a faixa de mangue é estreita). Resultado: 5,6 GB alocados para ~2,8 GB
-de dado útil, e a proporção piora conforme o domínio cresce.
+**Proposed next step (not implemented):** distinguishing "absent" from
+"valid zero" needs one more channel that this format doesn't have
+today. The natural design mirrors what GeoTIFF already does:
 
-**Próximo passo proposto (não implementado):** distinguir "ausente" de
-"zero válido" precisa de um canal a mais, que este formato não tem hoje.
-O desenho natural copia o que o GeoTIFF já faz:
-
-| | GeoTIFF | equivalente aqui |
+| | GeoTIFF | equivalent here |
 |---|---|---|
-| "este bloco não existe" | `TileOffsets[i] == 0` | índice de blocos presentes |
-| "esta célula é inválida" | valor `nodata` da banda | `nodata` por array no `metadata.json` |
+| "this block doesn't exist" | `TileOffsets[i] == 0` | index of present blocks |
+| "this cell is invalid" | band's `nodata` value | per-array `nodata` in `metadata.json` |
 
-O custo é baixo — um workspace típico tem ~1500 blocos, então o índice é
-da ordem de 1500 bits, contra os ~371 MB que uma máscara por célula
-custaria. `read_block_*` de um bloco ausente devolveria o `nodata`
-declarado sem tocar o disco. O ponto de atenção é `disk_sync_model.py`,
-que hoje escreve todo bloco incondicionalmente em `write_block_core` — a
-mudança precisaria decidir se um bloco totalmente nodata deve ou não
-voltar a ser gravado.
+The cost is low — a typical workspace has ~1500 blocks, so the index
+is on the order of 1500 bits, versus the ~371 MB a per-cell mask would
+cost. `read_block_*` for an absent block would return the declared
+`nodata` without touching disk. The point of attention is
+`disk_sync_model.py`, which today writes every block unconditionally
+in `write_block_core` — the change would need to decide whether a
+fully-nodata block should be written back at all.
 
-## Achado: ordem de eixos em Zarr não é garantida (y, x)
+## Finding: Zarr axis order is not guaranteed to be (y, x)
 
-Ao investigar a integração com `disscube` de verdade (não só sintética),
-achei que `CubeClient.load()`/`to_lucc_data()` fazem
-`.transpose("y", "x")` **defensivamente** antes de usar qualquer array
-— evidência de que a ordem de eixos gravada em disco não é garantida.
-Reproduzi com `xarray` real, gravando exatamente como
-`VariableWriter` do disscube grava (`da.to_dataset(...).to_zarr(...)`):
-um array **quadrado** com eixos `(x, y)` em vez de `(y, x)` tem o
-**mesmo shape** nos dois casos — a checagem de shape do `zarr_io.py`
-não detectava a inversão. Sem correção, isso corrompia linha/coluna
-**silenciosamente**, sem erro nenhum.
+While investigating real (not synthetic) integration with `disscube`,
+`CubeClient.load()`/`to_lucc_data()` were found to do
+`.transpose("y", "x")` **defensively** before using any array —
+evidence that the axis order stored on disk isn't guaranteed.
+Reproduced with real `xarray`, writing exactly the way disscube's
+`VariableWriter` writes (`da.to_dataset(...).to_zarr(...)`): a
+**square** array with `(x, y)` axes instead of `(y, x)` has the
+**same shape** in both cases — the shape check in `zarr_io.py` didn't
+catch the inversion. Without a fix, this corrupted row/column
+**silently**, with no error at all.
 
-**Fix:** Zarr v3 grava a ordem real de eixos num campo nativo do
-formato (`arr.metadata.dimension_names`, não `attrs` — diferente da
-convenção antiga do Zarr v2/xarray, `_ARRAY_DIMENSIONS`).
-`load_zarr_into_workspace` agora lê esse metadado e normaliza a leitura
-de cada bloco pra `(y, x)`/`(time, y, x)` independente da ordem física
-em disco. Testado com os três casos reais (`y,x` correto, `x,y`
-invertido em array quadrado, `x,y,time` invertido com dimensão
-temporal) em `tests/test_zarr_axis_order_regression.py`, usando
-`xarray` de verdade pra gravar — não `zarr` puro — pra reproduzir
-exatamente o que o `disscube` produz.
+**Fix:** Zarr v3 stores the real axis order in a native format field
+(`arr.metadata.dimension_names`, not `attrs` — unlike the older
+Zarr v2/xarray convention, `_ARRAY_DIMENSIONS`). `load_zarr_into_workspace`
+now reads that metadata and normalizes each block's read to
+`(y, x)`/`(time, y, x)` regardless of the physical on-disk order.
+Tested against three real cases (correct `y,x`, inverted `x,y` on a
+square array, inverted `x,y,time` with a time dimension) in
+`tests/test_zarr_axis_order_regression.py`, using real `xarray` to
+write — not plain `zarr` — to reproduce exactly what disscube
+produces.
 
-## Testando com arquivos grandes
+## Testing with large files
 
-`scripts/generate_and_benchmark.py` gera dados sintéticos **direto em
-disco, bloco a bloco** (nunca materializa a grade inteira em RAM para
-gerá-los — RNG determinística por posição de bloco, portanto
-reprodutível) e roda Game of Life via `MemmapRasterWorkspace`, medindo
-tempo e footprint de memória real.
+`scripts/generate_and_benchmark.py` generates synthetic data **directly
+on disk, block by block** (never materializing the whole grid in RAM
+to generate it — deterministic RNG per block position, hence
+reproducible) and runs Game of Life via `MemmapRasterWorkspace`,
+measuring wall time and real memory footprint.
 
 ```bash
 python scripts/generate_and_benchmark.py \
@@ -586,51 +455,40 @@ python scripts/generate_and_benchmark.py \
     --root /tmp/haloexec_bench
 ```
 
-Opções: `--shape ALTURA LARGURA`, `--block BLOCO_H BLOCO_W`, `--halo`,
-`--generations`, `--density` (fração de células vivas iniciais),
-`--seed`, `--root` (diretório do workspace), `--keep` (não apagar o
-workspace ao final, para inspecionar os arquivos gerados).
+Options: `--shape HEIGHT WIDTH`, `--block BLOCK_H BLOCK_W`, `--halo`,
+`--generations`, `--density` (fraction of initially alive cells),
+`--seed`, `--root` (workspace directory), `--keep` (don't delete the
+workspace at the end, to inspect the generated files).
 
-**Métrica reportada e por quê:** o script separa `RssAnon` (heap real
-alocado pelo processo — a métrica que prova se a grade foi ou não
-materializada) de `RssFile` (cache de páginas do `mmap` tocadas,
-reclamável pelo kernel, que cresce com o volume acumulado tocado mas
-não representa memória "retida"). Usar só `ru_maxrss`/`VmRSS`
-(RssAnon+RssFile somados) é enganoso para workflows baseados em
-`mmap` — ele cresce mesmo quando o processo nunca reteve a grade
-inteira de uma vez.
+**Reported metric and why:** the script separates `RssAnon` (real heap
+allocated by the process — the metric that proves whether the grid was
+materialized or not) from `RssFile` (page cache for touched `mmap`
+pages, reclaimable by the kernel, which grows with cumulative volume
+touched but doesn't represent "retained" memory). Using only
+`ru_maxrss`/`VmRSS` (RssAnon+RssFile combined) is misleading for
+`mmap`-based workflows — it grows even when the process never held the
+whole grid at once.
 
-Resultado de referência medido em ambiente com ~3.9GB de RAM: grade de
-40000×40000 (1,6 bilhão de células, ~1,5GB por array — maior que 40%
-da RAM total do container) rodou com `RssAnon` em ~130MB e delta de
-~4MB desde o início, confirmando que o footprint do processo não
-escala com o tamanho da grade.
+Reference result measured in an environment with ~3.9GB of RAM: a
+40000×40000 grid (1.6 billion cells, ~1.5GB per array — more than 40%
+of the container's total RAM) ran with `RssAnon` around 130MB and a
+delta of ~4MB from the start, confirming the process footprint doesn't
+scale with grid size.
 
-Para testar outro modelo em vez de Game of Life, troque a função
-`_game_of_life_rule` do script por qualquer regra
-`dict[str, np.ndarray] -> dict[str, np.ndarray]` — a mecânica de
-geração/benchmark não muda.
+To test a different model instead of Game of Life, swap out the
+script's `_game_of_life_rule` function for any
+`dict[str, np.ndarray] -> dict[str, np.ndarray]` rule — the
+generation/benchmark mechanics don't change.
 
-## Caminho de migração para dissmodel core
+## Migration path to dissmodel core
 
-Quando a revisão JOSS estabilizar, `HaloChunkedRasterCellularAutomaton`
-deve migrar para dentro de `dissmodel.geo.raster` (ou módulo
-equivalente), mantendo a mesma API pública. Como o pacote já depende
-de `dissmodel` e reusa suas classes reais (não uma reimplementação),
-a migração é literalmente mover a pasta — sem reescrita de lógica.
-`tests/test_equivalence.py` serve como suíte de regressão para
-confirmar isso.
+Once the JOSS review stabilizes, `HaloChunkedRasterCellularAutomaton`
+should migrate into `dissmodel.geo.raster` (or an equivalent module),
+keeping the same public API. Since the package already depends on
+`dissmodel` and reuses its real classes (not a reimplementation), the
+migration is literally moving the folder — no logic rewrite.
+`tests/test_equivalence.py` serves as the regression suite to confirm
+this.
 
-Aplicação prática esperada: `brmangue-dissmodel` troca
-`class FloodModel(SyncRasterModel)` por
-`class FloodModel(HaloChunkedSyncRasterModel, SyncRasterModel)`
-(ou compõe `FloodModelHalo` como feito no teste), elimina o
-`chunked_engine.py` próprio, e ganha chunking com halo validado sem
-reescrever a lógica hidrológica.
-
-`dissmodel-abm` **não** usa este motor — agentes móveis exigem halo
-dinâmico (transferência de agentes entre blocos), problema diferente
-não coberto aqui.
-
-Nenhum patch deste pacote deve ser aplicado ao `dissmodel` core
-enquanto este estiver sob revisão.
+No patch from this package should be applied to `dissmodel` core while
+it remains under review.
