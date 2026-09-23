@@ -1,0 +1,1427 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Domain decomposition with halo zones for large-scale cellular automata">
+      
+      
+      
+        <link rel="canonical" href="https://dissmodel.github.io/haloexec/theory_and_concepts/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Theory & Core Concepts - haloexec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#theory-and-core-concepts" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="haloexec" class="md-header__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            haloexec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Theory & Core Concepts
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="haloexec" class="md-nav__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    haloexec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory & Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory & Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-domain-decomposition-for-raster-automata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Domain Decomposition for Raster Automata
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Domain Decomposition for Raster Automata">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-mathematical-formulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Mathematical Formulation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-regular-decomposition-with-edge-residue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Regular Decomposition with Edge Residue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-ghost-cell-pattern-halo-zones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Ghost Cell Pattern (Halo Zones)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. The Ghost Cell Pattern (Halo Zones)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-theoretical-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Theoretical Foundations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-core-vs-halo-regions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Core vs. Halo Regions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-spatial-dependency-reach-multi-hop-hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Spatial Dependency Reach &amp; Multi-Hop Hazards
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Spatial Dependency Reach &amp; Multi-Hop Hazards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-the-multi-hop-dependency-theorem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 The Multi-Hop Dependency Theorem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-real-world-case-study-the-floodmodel-2-hop-hazard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Real-World Case Study: The FloodModel 2-Hop Hazard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-boundary-conditions-the-zero-sentinel-pitfall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Boundary Conditions &amp; The "Zero-Sentinel" Pitfall
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Boundary Conditions &amp; The &#34;Zero-Sentinel&#34; Pitfall">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-danger-of-default-zero-padding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 The Danger of Default Zero Padding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-per-array-sentinel-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Per-Array Sentinel Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-out-of-core-computation-memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Out-of-Core Computation &amp; Memory Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Out-of-Core Computation &amp; Memory Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-memory-mapped-io-numpymemmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Memory-Mapped I/O (numpy.memmap)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-decoupling-heap-rssanon-from-kernel-page-cache-rssfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Decoupling Heap (RssAnon) from Kernel Page Cache (RssFile)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-filesystem-sparsity-economics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Filesystem Sparsity Economics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-race-conditions-state-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Race Conditions &amp; State Synchronization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Race Conditions &amp; State Synchronization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-read-after-write-raw-data-hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Read-After-Write (RAW) Data Hazards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-logical-double-buffering-ping-pong-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Logical Double-Buffering (Ping-Pong Architecture)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-temporal-replication-the-_past-synchronization-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Temporal Replication: The _past Synchronization Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-unbounded-spatial-dependencies-iterative-sweeps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Unbounded Spatial Dependencies (Iterative Sweeps)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Unbounded Spatial Dependencies (Iterative Sweeps)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-limitations-of-fixed-depth-halos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Limitations of Fixed-Depth Halos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-gauss-seidel-iterative-convergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Gauss-Seidel Iterative Convergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-monotonicity-and-convergence-guarantee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Monotonicity and Convergence Guarantee
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-spatial-ingestion-coordinate-anomalies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Spatial Ingestion &amp; Coordinate Anomalies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Spatial Ingestion &amp; Coordinate Anomalies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-geotiff-windowed-streaming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 GeoTIFF Windowed Streaming
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-the-zarr-v3-axis-ordering-anomaly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 The Zarr v3 Axis-Ordering Anomaly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture & Design Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials_and_recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Recipes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-domain-decomposition-for-raster-automata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Domain Decomposition for Raster Automata
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Domain Decomposition for Raster Automata">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-mathematical-formulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Mathematical Formulation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-regular-decomposition-with-edge-residue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Regular Decomposition with Edge Residue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-ghost-cell-pattern-halo-zones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. The Ghost Cell Pattern (Halo Zones)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. The Ghost Cell Pattern (Halo Zones)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-theoretical-foundations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Theoretical Foundations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-core-vs-halo-regions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Core vs. Halo Regions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-spatial-dependency-reach-multi-hop-hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Spatial Dependency Reach &amp; Multi-Hop Hazards
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Spatial Dependency Reach &amp; Multi-Hop Hazards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-the-multi-hop-dependency-theorem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 The Multi-Hop Dependency Theorem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-real-world-case-study-the-floodmodel-2-hop-hazard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Real-World Case Study: The FloodModel 2-Hop Hazard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-boundary-conditions-the-zero-sentinel-pitfall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Boundary Conditions &amp; The "Zero-Sentinel" Pitfall
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Boundary Conditions &amp; The &#34;Zero-Sentinel&#34; Pitfall">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-danger-of-default-zero-padding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 The Danger of Default Zero Padding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-per-array-sentinel-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Per-Array Sentinel Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-out-of-core-computation-memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Out-of-Core Computation &amp; Memory Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Out-of-Core Computation &amp; Memory Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-memory-mapped-io-numpymemmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Memory-Mapped I/O (numpy.memmap)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-decoupling-heap-rssanon-from-kernel-page-cache-rssfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Decoupling Heap (RssAnon) from Kernel Page Cache (RssFile)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-filesystem-sparsity-economics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Filesystem Sparsity Economics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-race-conditions-state-synchronization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Race Conditions &amp; State Synchronization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Race Conditions &amp; State Synchronization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-read-after-write-raw-data-hazards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Read-After-Write (RAW) Data Hazards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-logical-double-buffering-ping-pong-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Logical Double-Buffering (Ping-Pong Architecture)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-temporal-replication-the-_past-synchronization-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Temporal Replication: The _past Synchronization Problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-unbounded-spatial-dependencies-iterative-sweeps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Unbounded Spatial Dependencies (Iterative Sweeps)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Unbounded Spatial Dependencies (Iterative Sweeps)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-limitations-of-fixed-depth-halos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Limitations of Fixed-Depth Halos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-gauss-seidel-iterative-convergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Gauss-Seidel Iterative Convergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-monotonicity-and-convergence-guarantee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Monotonicity and Convergence Guarantee
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-spatial-ingestion-coordinate-anomalies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Spatial Ingestion &amp; Coordinate Anomalies
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Spatial Ingestion &amp; Coordinate Anomalies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-geotiff-windowed-streaming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 GeoTIFF Windowed Streaming
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-the-zarr-v3-axis-ordering-anomaly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 The Zarr v3 Axis-Ordering Anomaly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="theory-and-core-concepts">Theory and Core Concepts<a class="headerlink" href="#theory-and-core-concepts" title="Permanent link">&para;</a></h1>
+<p><code>haloexec</code> provides a rigorous execution environment for spatial simulations and Cellular Automata (CA) on arbitrary two-dimensional raster grids. This document establishes the formal mathematical, algorithmic, and computational foundations governing the engine.</p>
+<hr />
+<h2 id="1-domain-decomposition-for-raster-automata">1. Domain Decomposition for Raster Automata<a class="headerlink" href="#1-domain-decomposition-for-raster-automata" title="Permanent link">&para;</a></h2>
+<h3 id="11-mathematical-formulation">1.1 Mathematical Formulation<a class="headerlink" href="#11-mathematical-formulation" title="Permanent link">&para;</a></h3>
+<p>Consider a discrete two-dimensional spatial domain <span class="arithmatex">\(\Omega\)</span> defined as a bounded integer lattice:</p>
+<div class="arithmatex">\[\Omega = \{ (r, c) \in \mathbb{Z}^2 \mid 0 \le r &lt; H, \; 0 \le c &lt; W \}\]</div>
+<p>where <span class="arithmatex">\(H\)</span> is the total domain height (rows) and <span class="arithmatex">\(W\)</span> is the total domain width (columns). A state variable <span class="arithmatex">\(A\)</span> on <span class="arithmatex">\(\Omega\)</span> is a mapping:</p>
+<div class="arithmatex">\[A: \Omega \to \mathcal{S}\]</div>
+<p>where <span class="arithmatex">\(\mathcal{S}\)</span> represents the state space (e.g., <span class="arithmatex">\(\mathcal{S} \subseteq \mathbb{R}\)</span> for elevation, or <span class="arithmatex">\(\mathcal{S} \subseteq \{0, 1, \dots, K-1\}\)</span> for categorical land-use classes).</p>
+<p>In <strong>Domain Decomposition</strong>, <span class="arithmatex">\(\Omega\)</span> is partitioned into a set of non-overlapping rectangular sub-domains (blocks) <span class="arithmatex">\(\mathcal{B} = \{ B_{i, j} \}\)</span>:</p>
+<div class="arithmatex">\[B_{i, j} = [r_{0}^{(i)}, r_{1}^{(i)}) \times [c_{0}^{(j)}, c_{1}^{(j)})\]</div>
+<p>such that:</p>
+<div class="arithmatex">\[\bigcup_{i, j} B_{i, j} = \Omega \quad \text{and} \quad B_{i, j} \cap B_{i', j'} = \emptyset \quad \forall (i, j) \neq (i', j')\]</div>
+<h3 id="12-regular-decomposition-with-edge-residue">1.2 Regular Decomposition with Edge Residue<a class="headerlink" href="#12-regular-decomposition-with-edge-residue" title="Permanent link">&para;</a></h3>
+<p>Given target block dimensions <span class="arithmatex">\((b_h, b_w)\)</span>, the grid coordinates for block indices <span class="arithmatex">\(i \in \{0, \dots, \lceil H / b_h \rceil - 1\}\)</span> and <span class="arithmatex">\(j \in \{0, \dots, \lceil W / b_w \rceil - 1\}\)</span> are:</p>
+<div class="arithmatex">\[\begin{aligned}
+r_{0}^{(i)} &amp;= i \cdot b_h, &amp; r_{1}^{(i)} &amp;= \min((i + 1) \cdot b_h, H) \\
+c_{0}^{(j)} &amp;= j \cdot b_w, &amp; c_{1}^{(j)} &amp;= \min((j + 1) \cdot b_w, W)
+\end{aligned}\]</div>
+<p>Blocks situated at the southern (<span class="arithmatex">\(r_1 = H\)</span>) or eastern (<span class="arithmatex">\(c_1 = W\)</span>) boundaries naturally accommodate residual dimensions when <span class="arithmatex">\(H \not\equiv 0 \pmod{b_h}\)</span> or <span class="arithmatex">\(W \not\equiv 0 \pmod{b_w}\)</span> without requiring dummy cell insertions or coordinate transformations (<a href="https://doi.org/10.3390/ijgi14030109">Xia et al., 2025</a>).</p>
+<hr />
+<h2 id="2-the-ghost-cell-pattern-halo-zones">2. The Ghost Cell Pattern (Halo Zones)<a class="headerlink" href="#2-the-ghost-cell-pattern-halo-zones" title="Permanent link">&para;</a></h2>
+<h3 id="21-theoretical-foundations">2.1 Theoretical Foundations<a class="headerlink" href="#21-theoretical-foundations" title="Permanent link">&para;</a></h3>
+<p>In spatial models and cellular automata, the state update of cell <span class="arithmatex">\((r, c)\)</span> at time step <span class="arithmatex">\(t + \Delta t\)</span> depends on the states of cells in its local neighborhood <span class="arithmatex">\(\mathcal{N}(r, c)\)</span> at time <span class="arithmatex">\(t\)</span>:</p>
+<div class="arithmatex">\[A^{(t+\Delta t)}(r, c) = \mathcal{R}\left( \left\{ A^{(t)}(r', c') \mid (r', c') \in \mathcal{N}(r, c) \right\} \right)\]</div>
+<p>When the domain is partitioned, evaluating <span class="arithmatex">\(\mathcal{R}\)</span> for cells along the perimeter of block <span class="arithmatex">\(B_{i, j}\)</span> requires values belonging to adjacent neighbor blocks <span class="arithmatex">\(B_{i \pm 1, j \pm 1}\)</span>.</p>
+<p>The <strong>Ghost Cell Pattern</strong> (<a href="https://doi.org/10.1145/1953611.1953615">Kjolstad &amp; Snir, 2010</a>) solves this spatial coupling by augmenting each local sub-domain <span class="arithmatex">\(B_{i, j}\)</span> with a perimeter of boundary cells—termed <strong>ghost cells</strong> or a <strong>halo zone</strong>—of width <span class="arithmatex">\(h\)</span>:</p>
+<div class="arithmatex">\[B_{i, j}^{\text{halo}} = [r_{0}^{(i)} - h, \; r_{1}^{(i)} + h) \times [c_{0}^{(j)} - h, \; c_{1}^{(j)} + h)\]</div>
+<div class="highlight"><pre><span></span><code>+-----------------------------------------------------------+
+| External Boundary Halo (Filled with boundary_value)      |
+|   +---------------------------------------------------+   |
+|   | Internal Ghost Cells (Copied from neighbor blocks)|   |
+|   |   +-------------------------------------------+   |   |
+|   |   |                                           |   |   |
+|   |   |             Core Block Domain             |   |   |
+|   |   |              (r0:r1, c0:c1)               |   |   |
+|   |   |         Updated by rule() evaluation      |   |   |
+|   |   |                                           |   |   |
+|   |   +-------------------------------------------+   |   |
+|   |   |                                           |   |   |
+|   +---+-------------------------------------------+---+   |
++-----------------------------------------------------------+
+</code></pre></div>
+<h3 id="22-core-vs-halo-regions">2.2 Core vs. Halo Regions<a class="headerlink" href="#22-core-vs-halo-regions" title="Permanent link">&para;</a></h3>
+<p>During execution:
+1. <strong>Extraction</strong>: A window corresponding to <span class="arithmatex">\(B_{i, j}^{\text{halo}}\)</span> is populated with state data at time <span class="arithmatex">\(t\)</span>.
+2. <strong>Local Evaluation</strong>: The transition function <span class="arithmatex">\(\mathcal{R}\)</span> executes over the full expanded window of shape <span class="arithmatex">\((b_h + 2h, b_w + 2h)\)</span>.
+3. <strong>Core Trimming</strong>: The outermost <span class="arithmatex">\(h\)</span> rows and columns of the output are discarded, retaining strictly the updated core <span class="arithmatex">\([h : -h, \; h : -h]\)</span> of shape <span class="arithmatex">\((b_h, b_w)\)</span>.
+4. <strong>Reconciliation</strong>: The updated core is committed to the destination state buffer at slice <span class="arithmatex">\([r_0 : r_1, \; c_0 : c_1]\)</span>.</p>
+<p>Because the boundary cells in the halo zone absorb all spatial stencil edge-effects, the computed core is mathematically and bit-identically equivalent to evaluating the global monolithic domain.</p>
+<hr />
+<h2 id="3-spatial-dependency-reach-multi-hop-hazards">3. Spatial Dependency Reach &amp; Multi-Hop Hazards<a class="headerlink" href="#3-spatial-dependency-reach-multi-hop-hazards" title="Permanent link">&para;</a></h2>
+<p>A frequent error in distributed and block-partitioned spatial modeling is equating the halo depth <span class="arithmatex">\(h\)</span> directly to the nominal shift radius of an elementary spatial operator.</p>
+<h3 id="31-the-multi-hop-dependency-theorem">3.1 The Multi-Hop Dependency Theorem<a class="headerlink" href="#31-the-multi-hop-dependency-theorem" title="Permanent link">&para;</a></h3>
+<p>Let an elementary spatial operator <span class="arithmatex">\(\mathcal{O}_k\)</span> have spatial stencil radius <span class="arithmatex">\(R(\mathcal{O}_k)\)</span>. If a model transition function <span class="arithmatex">\(\mathcal{R}\)</span> is composed of a sequence of dependent spatial transformations:</p>
+<div class="arithmatex">\[\mathcal{R} = \mathcal{O}_m \circ \mathcal{O}_{m-1} \circ \dots \circ \mathcal{O}_1\]</div>
+<p>where intermediate spatial field <span class="arithmatex">\(F_k = \mathcal{O}_k(F_{k-1})\)</span> is consumed by <span class="arithmatex">\(\mathcal{O}_{k+1}\)</span>, the <strong>effective spatial dependency reach</strong> <span class="arithmatex">\(R^*\)</span> of the transition function is the sum of the radii across all dependent stages:</p>
+<div class="arithmatex">\[R^* = \sum_{k=1}^{m} R(\mathcal{O}_k)\]</div>
+<p>To guarantee boundary equivalence with a monolithic execution, the halo depth must satisfy:</p>
+<div class="arithmatex">\[h \ge R^*\]</div>
+<h3 id="32-real-world-case-study-the-floodmodel-2-hop-hazard">3.2 Real-World Case Study: The <code>FloodModel</code> 2-Hop Hazard<a class="headerlink" href="#32-real-world-case-study-the-floodmodel-2-hop-hazard" title="Permanent link">&para;</a></h3>
+<p>During empirical validation against the TerraME golden dataset for the Maranhão Island (323 <span class="arithmatex">\(\times\)</span> 349 cells), setting <span class="arithmatex">\(h = 1\)</span> produced 91 divergent elevation cells at step 1, escalating to 1,431 divergent cells at step 19.</p>
+<p><strong>Root Cause Analysis:</strong>
+In <code>FloodModel</code>, the algorithm proceeds as follows:
+1. <strong>Stage 1 (1-hop stencil)</strong>: For each cell <span class="arithmatex">\((r, c)\)</span>, compute <code>viz_baixos</code>—the count of Moore neighbors <span class="arithmatex">\((r \pm 1, c \pm 1)\)</span> whose elevation is <span class="arithmatex">\(\le\)</span> cell <span class="arithmatex">\((r, c)\)</span>.
+2. <strong>Stage 2 (Local algebraic)</strong>: Compute <code>fluxo(r, c)</code> as a function of <code>viz_baixos(r, c)</code>.
+3. <strong>Stage 3 (2-hop stencil)</strong>: Update the elevation and state of cell <span class="arithmatex">\((r, c)\)</span> by inspecting <code>fluxo(r \pm 1, c \pm 1)</code>—the <em>flux of the neighbor</em>.</p>
+<p>Because the update at cell <span class="arithmatex">\((r, c)\)</span> requires the neighbor's flux, which itself required the neighbor's neighbors, information propagates across a Manhattan distance of 2 cells in a single time step (<span class="arithmatex">\(R^* = 2\)</span>).</p>
+<p>With <span class="arithmatex">\(h = 1\)</span>, the ghost cells at the block border had incorrect <code>fluxo</code> values because their outer neighbors were zero-padded by local directional shifting. This corrupted flux then infected the valid core cells adjacent to the border. Setting <span class="arithmatex">\(h = 2\)</span> fully resolved the divergence, achieving 100% equivalence.</p>
+<div class="highlight"><pre><span></span><code>Cell (r, c) in Core
+     └── depends on Neighbor (r+1, c) in Halo Ring 1
+              └── depends on Outer Neighbor (r+2, c) in Halo Ring 2
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>The Synthetic Boundary Test Trap</strong>: When testing spatial models using idealized synthetic rasters where sources (such as sea borders or forest boundaries) are placed exclusively along the outer domain edges, multi-hop halo errors remain hidden. This occurs because the outer edge of the domain is subject to external boundary padding in both monolithic and chunked modes. Multi-hop dependency bugs only manifest when feature gradients cross <strong>internal block boundaries</strong>.</p>
+</div>
+<hr />
+<h2 id="4-boundary-conditions-the-zero-sentinel-pitfall">4. Boundary Conditions &amp; The "Zero-Sentinel" Pitfall<a class="headerlink" href="#4-boundary-conditions-the-zero-sentinel-pitfall" title="Permanent link">&para;</a></h2>
+<p>When a block touches the physical perimeter of the global domain <span class="arithmatex">\(\Omega\)</span>, part of its halo zone falls outside the domain:</p>
+<div class="arithmatex">\[(r, c) \notin \Omega\]</div>
+<p>These external ghost cells must be populated using an external boundary condition.</p>
+<h3 id="41-the-danger-of-default-zero-padding">4.1 The Danger of Default Zero Padding<a class="headerlink" href="#41-the-danger-of-default-zero-padding" title="Permanent link">&para;</a></h3>
+<p>A ubiquitous practice in numerical computing is zero-padding (<code>np.pad(..., constant_values=0)</code>). In geospatial modeling, <strong>scalar zero is frequently a valid, meaningful state</strong>:
+- In elevation rasters (<code>alt</code>), <code>0.0</code> represents mean sea level.
+- In coastal models (e.g., BR-MANGUE), <code>solo = 0</code> denotes <code>SOLO_CANAL_FLUVIAL</code> (active river channel), which serves as a seed for mangrove colonization.</p>
+<p>If unmanaged, zero-padding external boundaries injects artificial river channels or sea-level cells along the edge of the study area, generating phantom colonization and divergent model dynamics.</p>
+<h3 id="42-per-array-sentinel-mapping">4.2 Per-Array Sentinel Mapping<a class="headerlink" href="#42-per-array-sentinel-mapping" title="Permanent link">&para;</a></h3>
+<p><code>haloexec</code> prevents this failure via <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/engine.py#L55">resolve_boundary_value</a>:
+- <code>boundary_value</code> accepts a dictionary mapping array names to their true domain <code>nodata</code> sentinel:
+  <div class="highlight"><pre><span></span><code><span class="n">boundary_value</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"uso"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">:</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">,</span> <span class="s2">"solo"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span>
+</code></pre></div>
+- <strong>Temporal State Fallback</strong>: When temporal synchronization creates historical arrays (e.g., <code>solo_past</code>), <code>resolve_boundary_value("solo_past")</code> automatically resolves to the base configuration for <code>solo</code> (<code>-1</code>) if not explicitly specified. This eliminates subtle bugs where historical arrays inadvertently revert to <code>0</code>.</p>
+<hr />
+<h2 id="5-out-of-core-computation-memory-management">5. Out-of-Core Computation &amp; Memory Management<a class="headerlink" href="#5-out-of-core-computation-memory-management" title="Permanent link">&para;</a></h2>
+<p>When scaling to regional or national extents (e.g., a 40,000 <span class="arithmatex">\(\times\)</span> 40,000 grid encompassing 1.6 billion cells, or 6.4 GB per float32 layer), allocating global in-memory NumPy arrays or performing global <code>np.pad</code> results in immediate Out-Of-Memory (OOM) termination.</p>
+<h3 id="51-memory-mapped-io-numpymemmap">5.1 Memory-Mapped I/O (<code>numpy.memmap</code>)<a class="headerlink" href="#51-memory-mapped-io-numpymemmap" title="Permanent link">&para;</a></h3>
+<p><a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/workspace.py#L81"><code>MemmapRasterWorkspace</code></a> stores spatial arrays directly on the filesystem as uncompressed binary disk files (<code>.dat</code>) accessed through POSIX <code>mmap()</code> system calls.</p>
+<p>Under <code>mmap</code>:
+1. The kernel maps the file on disk into the virtual address space of the process.
+2. No physical RAM is allocated until specific virtual addresses are accessed.
+3. Accessing a block triggers hardware page faults; the kernel OS page cache loads only the requested 4 KiB memory pages from disk into RAM.
+4. When memory pressure increases, dirty pages are asynchronously flushed to storage and clean pages are evicted from physical RAM automatically by the kernel.</p>
+<h3 id="52-decoupling-heap-rssanon-from-kernel-page-cache-rssfile">5.2 Decoupling Heap (<code>RssAnon</code>) from Kernel Page Cache (<code>RssFile</code>)<a class="headerlink" href="#52-decoupling-heap-rssanon-from-kernel-page-cache-rssfile" title="Permanent link">&para;</a></h3>
+<p>Traditional memory profilers report total Resident Set Size (<code>VmRSS</code> or <code>ru_maxrss</code>). For memory-mapped applications, this metric is deceptive:</p>
+<div class="arithmatex">\[\text{VmRSS} = \text{RssAnon} + \text{RssFile}\]</div>
+<ul>
+<li><strong><code>RssAnon</code> (Anonymous RSS)</strong>: Process heap memory (Python objects, local block arrays). This represents true memory retained by the program.</li>
+<li><strong><code>RssFile</code> (File-backed RSS)</strong>: OS page cache mirroring touched disk pages. This memory is dynamically reclaimed by the operating system whenever physical RAM is needed elsewhere.</li>
+</ul>
+<p><strong>Benchmark Evidence</strong>:<br />
+In a 40,000 <span class="arithmatex">\(\times\)</span> 40,000 Conway's Game of Life simulation (1.6 billion cells per step), benchmarked in a memory-constrained 3.9 GB RAM container:
+- Total file data touched: <span class="arithmatex">\(&gt; 3.2\text{ GB}\)</span>
+- Peak <code>RssAnon</code>: <strong><span class="arithmatex">\(\sim 130\text{ MB}\)</span></strong>
+- Net <code>RssAnon</code> delta throughout run: <strong><span class="arithmatex">\(\sim 4\text{ MB}\)</span></strong></p>
+<p>This proves that <code>haloexec</code>'s memory footprint is <span class="arithmatex">\(O(b_h \cdot b_w)\)</span>—proportional strictly to the block size, and <strong>strictly independent of the global domain size</strong> <span class="arithmatex">\(H \times W\)</span>.</p>
+<h3 id="53-filesystem-sparsity-economics">5.3 Filesystem Sparsity Economics<a class="headerlink" href="#53-filesystem-sparsity-economics" title="Permanent link">&para;</a></h3>
+<p>When creating new arrays, <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/workspace.py#L144"><code>MemmapRasterWorkspace.create()</code></a> uses <code>mode="w+"</code> to truncate and set the file length without writing zeros across the disk blocks.</p>
+<p>On modern filesystems (ext4, XFS, APFS, NTFS), this creates <strong>POSIX sparse files</strong>:
+- Unwritten disk blocks occupy zero physical storage on disk.
+- Reads to unwritten regions return zeros directly from the kernel without disk I/O.
+- Disk usage scales only with cells that have been explicitly written.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>The Dense Fill Tradeoff</strong>: Sparsity benefits are lost if an ingestion loader fills unmapped or ocean blocks with a dense sentinel value such as <code>np.nan</code> or <code>-9999.0</code>. To preserve sparse disk allocation, empty blocks should be omitted during ingestion, provided that <code>0</code> is an acceptable default representation for absent data.</p>
+</div>
+<hr />
+<h2 id="6-race-conditions-state-synchronization">6. Race Conditions &amp; State Synchronization<a class="headerlink" href="#6-race-conditions-state-synchronization" title="Permanent link">&para;</a></h2>
+<h3 id="61-read-after-write-raw-data-hazards">6.1 Read-After-Write (RAW) Data Hazards<a class="headerlink" href="#61-read-after-write-raw-data-hazards" title="Permanent link">&para;</a></h3>
+<p>In a synchronous Cellular Automaton, every cell's state at step <span class="arithmatex">\(t+1\)</span> must depend strictly on the state of its neighborhood at step <span class="arithmatex">\(t\)</span>. If blocks were updated in place sequentially:</p>
+<div class="arithmatex">\[\text{Block}_2 \text{ reads from } \text{Block}_1 \text{ at } t+1 \quad \implies \quad \text{Spatial Hazard!}\]</div>
+<p>A cell along the boundary of <span class="arithmatex">\(\text{Block}_2\)</span> would observe neighbor cells in <span class="arithmatex">\(\text{Block}_1\)</span> that have already transitioned to step <span class="arithmatex">\(t+1\)</span>, violating temporal synchrony and corrupting simulation dynamics.</p>
+<h3 id="62-logical-double-buffering-ping-pong-architecture">6.2 Logical Double-Buffering (Ping-Pong Architecture)<a class="headerlink" href="#62-logical-double-buffering-ping-pong-architecture" title="Permanent link">&para;</a></h3>
+<p><code>haloexec</code> eliminates RAW hazards through physical double-buffering. For every registered array, two physical files exist:
+- Slot <code>a</code>: <code>/path/to/workspace/a/{name}.dat</code>
+- Slot <code>b</code>: <code>/path/to/workspace/b/{name}.dat</code></p>
+<p>The execution protocol proceeds as follows:</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant Model as Simulation Model
+    participant SlotA as Slot A (Read)
+    participant SlotB as Slot B (Write)
+    participant Meta as Checkpoint Metadata
+
+    Note over SlotA,SlotB: Step t (read_slot = "a")
+    Model-&gt;&gt;SlotA: read_block_with_halo(block)
+    Note over Model: Compute transition rule()
+    Model-&gt;&gt;SlotB: write_block_core(block, core_updates)
+    Note over SlotA,SlotB: All blocks completed for step t
+    Model-&gt;&gt;Meta: swap_buffers() (read_slot := "b")
+    Model-&gt;&gt;Meta: checkpoint(step = t+1)
+    Note over SlotA,SlotB: Step t+1 (read_slot = "b")</code></pre>
+<p>Buffer swapping is purely logical: it modifies an in-memory pointer (<code>read_slot</code>) and updates an atomic JSON checkpoint file. No disk copying occurs.</p>
+<h3 id="63-temporal-replication-the-_past-synchronization-problem">6.3 Temporal Replication: The <code>_past</code> Synchronization Problem<a class="headerlink" href="#63-temporal-replication-the-_past-synchronization-problem" title="Permanent link">&para;</a></h3>
+<p>Many sophisticated ecological models (such as <code>SyncRasterModel</code> in <code>dissmodel</code>) retain previous-step states in designated <code>&lt;name&gt;_past</code> arrays to model multi-stage temporal feedback (e.g., accretion based on previous year's elevation).</p>
+<p>In monolithic in-memory frameworks, synchronization is implemented as:
+<div class="highlight"><pre><span></span><code><span class="n">backend</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">"alt_past"</span><span class="p">]</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">arrays</span><span class="p">[</span><span class="s2">"alt"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+</code></pre></div>
+If applied naively to a disk-backed memory-mapped workspace, this call would materialize the entire multi-gigabyte array in RAM, crashing the system.</p>
+<p><code>haloexec</code> resolves this via <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/workspace.py#L269">write_block_to_read_slot</a>:
+1. Historical arrays <code>&lt;name&gt;_past</code> are allocated directly within both disk slots.
+2. In <code>pre_execute()</code> and <code>post_execute()</code>, synchronization copies data <strong>block-by-block</strong> directly within the <strong>active read slot</strong>:
+   $<span class="arithmatex">\(\text{Slot}_{\text{read}}[name\_past][block] \longleftarrow \text{Slot}_{\text{read}}[name][block]\)</span>$
+3. During the block loop, when updates are written to the write slot, any <code>&lt;name&gt;_past</code> array not modified by the current model is carried forward to preserve continuity across buffer swaps.</p>
+<hr />
+<h2 id="7-unbounded-spatial-dependencies-iterative-sweeps">7. Unbounded Spatial Dependencies (Iterative Sweeps)<a class="headerlink" href="#7-unbounded-spatial-dependencies-iterative-sweeps" title="Permanent link">&para;</a></h2>
+<h3 id="71-limitations-of-fixed-depth-halos">7.1 Limitations of Fixed-Depth Halos<a class="headerlink" href="#71-limitations-of-fixed-depth-halos" title="Permanent link">&para;</a></h3>
+<p>Certain spatial processes cannot be bounded by a finite, localized halo radius:
+- <strong>Tidal / Marine Connectivity</strong>: Water penetrates inland through dendritic tidal creeks. A cell 50 kilometers inland might depend on ocean connectivity across thousands of intermediate cells.
+- <strong>Hydrological Flow Routing &amp; Basin Delineation</strong>: D8 flow direction routing accumulates downstream across an entire drainage basin.</p>
+<p>Resolving these dynamics with a static halo would require setting <span class="arithmatex">\(h = \max(H, W)\)</span>, degenerating into a monolithic execution that exhausts memory.</p>
+<h3 id="72-gauss-seidel-iterative-convergence">7.2 Gauss-Seidel Iterative Convergence<a class="headerlink" href="#72-gauss-seidel-iterative-convergence" title="Permanent link">&para;</a></h3>
+<p>For these unbounded processes, <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/convergence.py#L46"><code>sweep_until_convergence</code></a> replaces the fixed halo ping-pong mechanism with an <strong>iterative relaxation sweep</strong>:
+- Uses a minimal halo (<span class="arithmatex">\(h = 1\)</span>).
+- Traverses all blocks in the domain repeatedly.
+- Updates are written <strong>immediately in-place</strong> to the active read buffer via <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/workspace.py#L279">write_block_core_in_place</a>.</p>
+<div class="highlight"><pre><span></span><code>Sweep k:
+  Block(0,0) updates → written immediately to Slot
+  Block(0,1) reads Block(0,0)'s NEW output immediately (Gauss-Seidel acceleration)
+  ...
+Sweep k+1:
+  Repeats until zero blocks change across an entire domain sweep.
+</code></pre></div>
+<h3 id="73-monotonicity-and-convergence-guarantee">7.3 Monotonicity and Convergence Guarantee<a class="headerlink" href="#73-monotonicity-and-convergence-guarantee" title="Permanent link">&para;</a></h3>
+<p>Let the transition rule be represented as a vector operator <span class="arithmatex">\(T: \mathcal{S}^{|\Omega|} \to \mathcal{S}^{|\Omega|}\)</span>. </p>
+<p>If <span class="arithmatex">\(T\)</span> is <strong>monotone</strong> with respect to a partial order <span class="arithmatex">\(\le\)</span> on the state space:</p>
+<div class="arithmatex">\[X \le Y \implies T(X) \le T(Y)\]</div>
+<p>and the state space <span class="arithmatex">\(\mathcal{S}\)</span> is finite (e.g., binary connectivity <span class="arithmatex">\(\{0, 1\}\)</span> where states only transition from <span class="arithmatex">\(0 \to 1\)</span>), then:
+1. By the Knaster-Tarski fixed-point theorem, the sequence of sweeps is guaranteed to terminate at a unique least fixed point <span class="arithmatex">\(X^* = T(X^*)\)</span>.
+2. Gauss-Seidel ordering strictly accelerates convergence compared to Jacobi (ping-pong) updating because newly activated paths propagate across multiple blocks within a single global sweep.
+3. The worst-case number of sweeps is bounded by <span class="arithmatex">\(|\mathcal{B}| + 1\)</span> (the total number of blocks plus one verification sweep).</p>
+<hr />
+<h2 id="8-spatial-ingestion-coordinate-anomalies">8. Spatial Ingestion &amp; Coordinate Anomalies<a class="headerlink" href="#8-spatial-ingestion-coordinate-anomalies" title="Permanent link">&para;</a></h2>
+<h3 id="81-geotiff-windowed-streaming">8.1 GeoTIFF Windowed Streaming<a class="headerlink" href="#81-geotiff-windowed-streaming" title="Permanent link">&para;</a></h3>
+<p>Rather than loading large GeoTIFF or VRT rasters monolithically into memory, <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/io/geotiff.py#L75"><code>load_geotiffs_into_workspace</code></a> maps each block's bounding box to a <code>rasterio.windows.Window</code>:</p>
+<div class="arithmatex">\[\text{Window}(\text{col\_off} = c_0, \; \text{row\_off} = r_0, \; \text{width} = c_1 - c_0, \; \text{height} = r_1 - r_0)\]</div>
+<p>Data streams directly from disk into the corresponding block slice of the memory-mapped file, maintaining peak RAM usage within tens of megabytes.</p>
+<h3 id="82-the-zarr-v3-axis-ordering-anomaly">8.2 The Zarr v3 Axis-Ordering Anomaly<a class="headerlink" href="#82-the-zarr-v3-axis-ordering-anomaly" title="Permanent link">&para;</a></h3>
+<p>When ingesting data cubes from modern cloud stores (such as <code>disscube</code> or xarray datasets stored via <code>to_zarr()</code>), array dimensions do not have a guaranteed physical disk axis order of <code>(y, x)</code>:
+- Some datasets are serialized as <code>(x, y)</code> or <code>(time, x, y)</code>.
+- If a raster is <strong>square</strong> (<span class="arithmatex">\(H = W\)</span>), comparing shape tuples:
+  $<span class="arithmatex">\(\text{shape}(arr) = (N, N) \equiv (N, N)\)</span>$
+  fails to detect inverted axes. This causes silent, catastrophic transpose corruption (e.g., swapping latitude and longitude).</p>
+<p>To safeguard data integrity, <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/io/zarr.py#L93"><code>load_zarr_into_workspace</code></a> interrogates native Zarr v3 dimension metadata (<code>arr.metadata.dimension_names</code>):
+1. Resolves actual dimension positions: e.g., identifying whether <code>"y"</code> is at axis 0 or axis 1.
+2. Generates canonical index projections during chunk extraction.
+3. Automatically transposes extracted sub-arrays to standard <code>(y, x)</code> canonical orientation before committing blocks to the workspace.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

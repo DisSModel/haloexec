@@ -1,0 +1,982 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Domain decomposition with halo zones for large-scale cellular automata">
+      
+      
+      
+        <link rel="canonical" href="https://dissmodel.github.io/haloexec/architecture/">
+      
+      
+        <link rel="prev" href="../theory_and_concepts/">
+      
+      
+        <link rel="next" href="../api_reference/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Architecture & Design Patterns - haloexec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#software-architecture-and-design-patterns" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="haloexec" class="md-header__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            haloexec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture & Design Patterns
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="haloexec" class="md-nav__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    haloexec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../theory_and_concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory & Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture & Design Patterns
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture & Design Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Design Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-layered-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Layered Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-component-deep-dive-by-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Component Deep Dive by Layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Component Deep Dive by Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layer-0-pure-core-primitives-haloexecengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 0: Pure Core Primitives (haloexec.engine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-1-storage-workspace-management-haloexecdiskworkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 1: Storage &amp; Workspace Management (haloexec.disk.workspace)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-2-spatial-ingestion-egress-haloexecdiskio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 2: Spatial Ingestion &amp; Egress (haloexec.disk.io)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-3-model-execution-adapters-haloexecram-haloexecdisk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 3: Model Execution Adapters (haloexec.ram, haloexec.disk)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-key-design-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Key Design Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Key Design Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-cooperative-multiple-inheritance-via-python-mro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Cooperative Multiple Inheritance via Python MRO
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1 Cooperative Multiple Inheritance via Python MRO">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-resolution-order-mro-mechanics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method Resolution Order (MRO) Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-the-runtime-backend-swapping-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 The Runtime Backend-Swapping Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-decimation-adapter-pattern-workspacerasterbackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Decimation Adapter Pattern (WorkspaceRasterBackend)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials_and_recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Recipes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Design Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-layered-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Layered Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-component-deep-dive-by-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Component Deep Dive by Layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Component Deep Dive by Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layer-0-pure-core-primitives-haloexecengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 0: Pure Core Primitives (haloexec.engine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-1-storage-workspace-management-haloexecdiskworkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 1: Storage &amp; Workspace Management (haloexec.disk.workspace)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-2-spatial-ingestion-egress-haloexecdiskio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 2: Spatial Ingestion &amp; Egress (haloexec.disk.io)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layer-3-model-execution-adapters-haloexecram-haloexecdisk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layer 3: Model Execution Adapters (haloexec.ram, haloexec.disk)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-key-design-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Key Design Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Key Design Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-cooperative-multiple-inheritance-via-python-mro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Cooperative Multiple Inheritance via Python MRO
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1 Cooperative Multiple Inheritance via Python MRO">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#method-resolution-order-mro-mechanics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method Resolution Order (MRO) Mechanics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-the-runtime-backend-swapping-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 The Runtime Backend-Swapping Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-decimation-adapter-pattern-workspacerasterbackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Decimation Adapter Pattern (WorkspaceRasterBackend)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="software-architecture-and-design-patterns">Software Architecture and Design Patterns<a class="headerlink" href="#software-architecture-and-design-patterns" title="Permanent link">&para;</a></h1>
+<p>This document details the architectural design, component interactions, and design patterns utilized throughout <code>haloexec</code>.</p>
+<hr />
+<h2 id="1-design-philosophy">1. Design Philosophy<a class="headerlink" href="#1-design-philosophy" title="Permanent link">&para;</a></h2>
+<p><code>haloexec</code> is structured around four architectural tenets:</p>
+<ol>
+<li>
+<p><strong>Zero-Invasive Scientific Code (Contract Parity)</strong>:<br />
+   Scientists, hydrologists, and domain specialists write complex transition rules involving neighbourhood evaluations, directional shifts, and environmental equations. <code>haloexec</code> guarantees that existing models written for <a href="https://pypi.org/project/dissmodel/">dissmodel</a> (e.g., <code>RasterCellularAutomaton</code> and <code>SyncRasterModel</code>) run on chunked grids <strong>without modifying a single line of their scientific transition code</strong>.</p>
+</li>
+<li>
+<p><strong>Decoupled Core Primitives</strong>:<br />
+   The underlying domain decomposition engine, disk workspace, memory-mapped I/O, and convergence algorithms are completely self-contained. They possess <strong>zero runtime dependencies on <code>dissmodel</code></strong> and can be reused in any Python scientific computing framework.</p>
+</li>
+<li>
+<p><strong>Layered Separation of Concerns</strong>:<br />
+   Ingestion, spatial partitioning, storage management, model execution, and visualization are strictly separated into discrete architectural tiers.</p>
+</li>
+<li>
+<p><strong>Cooperative Extensibility via Python MRO</strong>:<br />
+   Rather than wrapping models in complex proxy classes or modifying base class implementations, <code>haloexec</code> employs cooperative multiple inheritance (mixins) governed by Python's Method Resolution Order (MRO).</p>
+</li>
+</ol>
+<hr />
+<h2 id="2-layered-architecture">2. Layered Architecture<a class="headerlink" href="#2-layered-architecture" title="Permanent link">&para;</a></h2>
+<p>The system is organized into five distinct layers:</p>
+<pre class="mermaid"><code>graph TD
+    subgraph Layer 4: Visualization &amp; Monitoring
+        CRMAP[CheckpointRasterMap]
+        WRB[WorkspaceRasterBackend]
+    end
+
+    subgraph Layer 3: Model Execution Adapters (dissmodel optional)
+        HCRCA[HaloChunkedRasterCellularAutomaton]
+        HCSM[HaloChunkedSyncRasterModel]
+        DCRCA[DiskChunkedRasterCellularAutomaton]
+        DCSM[DiskChunkedSyncRasterModel]
+        CONV[sweep_until_convergence]
+    end
+
+    subgraph Layer 2: Spatial Ingestion &amp; Egress
+        GTIFF_IO[geotiff.py: Loaders / Savers]
+        ZARR_IO[zarr.py: Multi-tile / Axis Normalizer]
+    end
+
+    subgraph Layer 1: Disk Storage &amp; Workspace Management
+        MRW[MemmapRasterWorkspace]
+        HWIN[halo_window &amp; HaloWindow]
+    end
+
+    subgraph Layer 0: Core Spatial Primitives (Zero Dependencies)
+        BLK[Block]
+        MBLK[make_blocks]
+        RBV[resolve_boundary_value]
+    end
+
+    Layer 4 --&gt; Layer 1
+    Layer 3 --&gt; Layer 1
+    Layer 3 --&gt; Layer 0
+    Layer 2 --&gt; Layer 1
+    Layer 1 --&gt; Layer 0</code></pre>
+<hr />
+<h2 id="3-component-deep-dive-by-layer">3. Component Deep Dive by Layer<a class="headerlink" href="#3-component-deep-dive-by-layer" title="Permanent link">&para;</a></h2>
+<h3 id="layer-0-pure-core-primitives-haloexecengine">Layer 0: Pure Core Primitives (<code>haloexec.engine</code>)<a class="headerlink" href="#layer-0-pure-core-primitives-haloexecengine" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/engine.py#L21">Block</a></strong>: An immutable, hashable dataclass representing a rectangular domain slice <span class="arithmatex">\([r_0:r_1, c_0:c_1)\)</span>. Provides properties <code>.shape</code> and <code>.core</code> (ready-to-use tuple of slice objects).</li>
+<li><strong><a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/engine.py#L41">make_blocks</a></strong>: Pure generator/function that subdivides arbitrary 2D dimensions <span class="arithmatex">\((H, W)\)</span> into regular blocks of target size <span class="arithmatex">\((b_h, b_w)\)</span>, naturally accommodating edge remainders.</li>
+<li><strong><a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/engine.py#L55">resolve_boundary_value</a></strong>: Sentinel resolution utility mapping array names to boundary nodata values, with automatic fallback for <code>&lt;name&gt;_past</code> temporal layers.</li>
+</ul>
+<h3 id="layer-1-storage-workspace-management-haloexecdiskworkspace">Layer 1: Storage &amp; Workspace Management (<code>haloexec.disk.workspace</code>)<a class="headerlink" href="#layer-1-storage-workspace-management-haloexecdiskworkspace" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/workspace.py#L81">MemmapRasterWorkspace</a></strong>: Manages binary disk arrays on the filesystem.</li>
+<li><strong>Directory Hierarchy</strong>:
+    <div class="highlight"><pre><span></span><code>workspace_root/
+├── metadata.json       # Shape, block dimensions, halo depth, array dtypes
+├── checkpoint.json     # Current simulation step and active read_slot ("a" or "b")
+├── a/                  # Physical double-buffer Slot A
+│   ├── uso.dat
+│   └── alt.dat
+└── b/                  # Physical double-buffer Slot B
+    ├── uso.dat
+    └── alt.dat
+</code></pre></div></li>
+<li><strong>Methods</strong>:<ul>
+<li><code>create()</code>: Allocates sparse memory-mapped files without dense zero-initialization.</li>
+<li><code>read_block_with_halo(block, boundary_value)</code>: Extracts the halo window, reading existing cells from disk and applying boundary sentinels to external borders.</li>
+<li><code>write_block_core(block, values)</code>: Writes updated core results into the <strong>write slot</strong> (preserving ping-pong synchrony).</li>
+<li><code>write_block_to_read_slot(block, name, values)</code>: Writes directly into the active <strong>read slot</strong> (used exclusively for <code>&lt;name&gt;_past</code> temporal snapshots).</li>
+<li><code>write_block_core_in_place(block, values)</code>: Writes directly into the active read slot for iterative Gauss-Seidel convergence.</li>
+<li><code>swap_buffers()</code>: Inverts the active read/write slots.</li>
+<li><code>checkpoint(step)</code>: Atomically persists execution state.</li>
+</ul>
+</li>
+</ul>
+<h3 id="layer-2-spatial-ingestion-egress-haloexecdiskio">Layer 2: Spatial Ingestion &amp; Egress (<code>haloexec.disk.io</code>)<a class="headerlink" href="#layer-2-spatial-ingestion-egress-haloexecdiskio" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/io/geotiff.py">geotiff.py</a></strong>:</li>
+<li>Streams GeoTIFF and VRT rasters into a <code>MemmapRasterWorkspace</code> block-by-block using <code>rasterio.windows.Window</code>.</li>
+<li>Validates coordinate reference systems (CRS) and dimension consistency across multi-file inputs.</li>
+<li>Exports workspace slots to Cloud-Optimized GeoTIFFs (COG) with block-aligned tiling.</li>
+<li><strong><a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/io/zarr.py">zarr.py</a></strong>:</li>
+<li>Streams directly from Zarr groups or arrays (compatible with <code>disscube</code> data cubes).</li>
+<li>Normalizes coordinate axis orders using Zarr v3 dimension metadata (<code>arr.metadata.dimension_names</code>) to prevent silent transpose bugs.</li>
+<li>Assembles multi-tile footprints (<code>load_zarr_tiles_into_workspace</code>) into continuous seamless rasters.</li>
+</ul>
+<h3 id="layer-3-model-execution-adapters-haloexecram-haloexecdisk">Layer 3: Model Execution Adapters (<code>haloexec.ram</code>, <code>haloexec.disk</code>)<a class="headerlink" href="#layer-3-model-execution-adapters-haloexecram-haloexecdisk" title="Permanent link">&para;</a></h3>
+<p>Contains the execution harnesses that connect simulation rules to either RAM buffers or disk workspaces.</p>
+<hr />
+<h2 id="4-key-design-patterns">4. Key Design Patterns<a class="headerlink" href="#4-key-design-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="41-cooperative-multiple-inheritance-via-python-mro">4.1 Cooperative Multiple Inheritance via Python MRO<a class="headerlink" href="#41-cooperative-multiple-inheritance-via-python-mro" title="Permanent link">&para;</a></h3>
+<p>In models inheriting from <code>SyncRasterModel</code> (such as <code>FloodModel</code> or <code>MangroveModel</code>), the scientific logic is contained within <code>execute()</code>. To add chunked execution without altering the source model, <code>haloexec</code> utilizes mixin inheritance:</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FloodModelDiskHalo</span><span class="p">(</span><span class="n">DiskChunkedSyncRasterModel</span><span class="p">,</span> <span class="n">FloodModel</span><span class="p">):</span>
+    <span class="k">pass</span>
+</code></pre></div>
+<h4 id="method-resolution-order-mro-mechanics">Method Resolution Order (MRO) Mechanics<a class="headerlink" href="#method-resolution-order-mro-mechanics" title="Permanent link">&para;</a></h4>
+<p>Python resolves method calls using the C3 Linearization algorithm. Placing <code>DiskChunkedSyncRasterModel</code> first in the class declaration produces the following MRO chain:</p>
+<pre class="mermaid"><code>graph LR
+    Subclass[FloodModelDiskHalo] --&gt; Mixin[DiskChunkedSyncRasterModel]
+    Mixin --&gt; BaseScientific[FloodModel]
+    BaseScientific --&gt; SyncBase[SyncRasterModel]
+    SyncBase --&gt; RasterModelBase[RasterModel]
+    RasterModelBase --&gt; CoreModel[dissmodel.core.Model]</code></pre>
+<p>When the simulation environment invokes <code>model.execute()</code>:
+1. <code>DiskChunkedSyncRasterModel.execute()</code> intercepts the call first.
+2. The mixin iterates over the workspace blocks:
+   - For each block, it populates a local <code>block_backend</code>.
+   - It substitutes <code>self.backend = block_backend</code> and <code>self.shape = block_backend.shape</code>.
+   - It invokes <code>super().execute()</code>.
+3. <code>super().execute()</code> evaluates <code>FloodModel.execute()</code>, which computes equations against the <strong>local block</strong>, unaware that it is operating on a sub-domain.
+4. The mixin recovers the result, trims the halo, writes the core to the destination buffer, and restores <code>self.backend</code> in a <code>finally</code> block.</p>
+<h3 id="42-the-runtime-backend-swapping-pattern">4.2 The Runtime Backend-Swapping Pattern<a class="headerlink" href="#42-the-runtime-backend-swapping-pattern" title="Permanent link">&para;</a></h3>
+<p>Scientific models frequently query context and spatial helper methods directly from their attached backend:
+- <code>self.backend.focal_sum_mask(...)</code>
+- <code>rows, cols = self.shape</code>
+- <code>self.shift(array, direction)</code></p>
+<p>If the model operated on the global backend while processing a block, operations like <code>focal_sum_mask()</code> would allocate arrays of global shape <span class="arithmatex">\((H, W)\)</span>, defeating the purpose of domain decomposition.</p>
+<p>The <strong>Backend-Swapping Pattern</strong> dynamically contextualizes the model:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># haloexec/ram/cellular_automaton.py:L142-L148</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">block_backend</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">updates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">(</span><span class="n">block_backend</span><span class="o">.</span><span class="n">snapshot</span><span class="p">())</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">real_backend</span>
+</code></pre></div>
+<p>By ensuring that <code>self.backend</code> and <code>self.shape</code> point to <code>block_backend</code> during the inner evaluation, all spatial kernels and memory buffers allocate locally with dimensions <span class="arithmatex">\((b_h + 2h, b_w + 2h)\)</span>.</p>
+<h3 id="43-decimation-adapter-pattern-workspacerasterbackend">4.3 Decimation Adapter Pattern (<code>WorkspaceRasterBackend</code>)<a class="headerlink" href="#43-decimation-adapter-pattern-workspacerasterbackend" title="Permanent link">&para;</a></h3>
+<p>Visualizing multi-million-cell rasters with <code>matplotlib</code> or interactive dashboards causes severe performance degradation and memory spikes.</p>
+<p>Rather than copying and downsampling the entire raster in RAM, <a href="https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/backend.py#L16">WorkspaceRasterBackend</a> implements an on-the-fly strided view:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># haloexec/disk/backend.py:L57</span>
+<span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">mm</span><span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">,</span> <span class="p">::</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">mm</span> <span class="ow">in</span> <span class="n">memmaps</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+</code></pre></div>
+<p>Through NumPy striding, slicing a memory-mapped array with <code>::stride</code> creates a view without copying data. The kernel loads only the specific pages containing sampled pixels, rendering massive rasters instantaneously.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

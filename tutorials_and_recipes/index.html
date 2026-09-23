@@ -1,0 +1,1054 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Domain decomposition with halo zones for large-scale cellular automata">
+      
+      
+      
+        <link rel="canonical" href="https://dissmodel.github.io/haloexec/tutorials_and_recipes/">
+      
+      
+        <link rel="prev" href="../api_reference/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Tutorials & Recipes - haloexec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tutorials-and-practical-recipes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="haloexec" class="md-header__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            haloexec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tutorials & Recipes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="haloexec" class="md-nav__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    haloexec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../theory_and_concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory & Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture & Design Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Recipes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Recipes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-1-in-memory-chunked-cellular-automaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 1: In-Memory Chunked Cellular Automaton
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-2-out-of-core-simulation-on-massive-grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 2: Out-of-Core Simulation on Massive Grids
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-3-out-of-core-ecological-model-with-historical-arrays-_past" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 3: Out-of-Core Ecological Model with Historical Arrays (_past)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-4-streaming-real-world-geotiffs-in-and-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 4: Streaming Real-World GeoTIFFs In and Out
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-5-ingesting-zarr-cubes-and-multi-tile-layouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 5: Ingesting Zarr Cubes and Multi-Tile Layouts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-6-unbounded-hydrological-connectivity-with-iterative-sweeps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 6: Unbounded Hydrological Connectivity with Iterative Sweeps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-7-visualizing-giant-rasters-efficiently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 7: Visualizing Giant Rasters Efficiently
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-8-profiling-real-memory-footprint-rssanon-vs-rssfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 8: Profiling Real Memory Footprint (RssAnon vs RssFile)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-1-in-memory-chunked-cellular-automaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 1: In-Memory Chunked Cellular Automaton
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-2-out-of-core-simulation-on-massive-grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 2: Out-of-Core Simulation on Massive Grids
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-3-out-of-core-ecological-model-with-historical-arrays-_past" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 3: Out-of-Core Ecological Model with Historical Arrays (_past)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-4-streaming-real-world-geotiffs-in-and-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 4: Streaming Real-World GeoTIFFs In and Out
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-5-ingesting-zarr-cubes-and-multi-tile-layouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 5: Ingesting Zarr Cubes and Multi-Tile Layouts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-6-unbounded-hydrological-connectivity-with-iterative-sweeps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 6: Unbounded Hydrological Connectivity with Iterative Sweeps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-7-visualizing-giant-rasters-efficiently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 7: Visualizing Giant Rasters Efficiently
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipe-8-profiling-real-memory-footprint-rssanon-vs-rssfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe 8: Profiling Real Memory Footprint (RssAnon vs RssFile)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tutorials-and-practical-recipes">Tutorials and Practical Recipes<a class="headerlink" href="#tutorials-and-practical-recipes" title="Permanent link">&para;</a></h1>
+<p>This guide provides end-to-end recipes for implementing and executing models with <code>haloexec</code>.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#recipe-1-in-memory-chunked-cellular-automaton">Recipe 1: In-Memory Chunked Cellular Automaton</a></li>
+<li><a href="#recipe-2-out-of-core-simulation-on-massive-grids">Recipe 2: Out-of-Core Simulation on Massive Grids</a></li>
+<li><a href="#recipe-3-out-of-core-ecological-model-with-historical-arrays-_past">Recipe 3: Out-of-Core Ecological Model with Historical Arrays (<code>_past</code>)</a></li>
+<li><a href="#recipe-4-streaming-real-world-geotiffs-in-and-out">Recipe 4: Streaming Real-World GeoTIFFs In and Out</a></li>
+<li><a href="#recipe-5-ingesting-zarr-cubes-and-multi-tile-layouts">Recipe 5: Ingesting Zarr Cubes and Multi-Tile Layouts</a></li>
+<li><a href="#recipe-6-unbounded-hydrological-connectivity-with-iterative-sweeps">Recipe 6: Unbounded Hydrological Connectivity with Iterative Sweeps</a></li>
+<li><a href="#recipe-7-visualizing-giant-rasters-efficiently">Recipe 7: Visualizing Giant Rasters Efficiently</a></li>
+<li><a href="#recipe-8-profiling-real-memory-footprint-rssanon-vs-rssfile">Recipe 8: Profiling Real Memory Footprint (<code>RssAnon</code> vs <code>RssFile</code>)</a></li>
+</ol>
+<hr />
+<h2 id="recipe-1-in-memory-chunked-cellular-automaton">Recipe 1: In-Memory Chunked Cellular Automaton<a class="headerlink" href="#recipe-1-in-memory-chunked-cellular-automaton" title="Permanent link">&para;</a></h2>
+<p>Use this recipe when grids fit comfortably in RAM, but you want to evaluate block-wise behavior or prepare models for scaling.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dissmodel.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dissmodel.geo.raster.backend</span><span class="w"> </span><span class="kn">import</span> <span class="n">RasterBackend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec</span><span class="w"> </span><span class="kn">import</span> <span class="n">HaloChunkedRasterCellularAutomaton</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ForestFire</span><span class="p">(</span><span class="n">HaloChunkedRasterCellularAutomaton</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    States:</span>
+<span class="sd">      0 = Empty</span>
+<span class="sd">      1 = Tree</span>
+<span class="sd">      2 = Burning</span>
+<span class="sd">    """</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="s2">"state"</span><span class="p">]</span>
+        <span class="c1"># Query active block backend for focal operations</span>
+        <span class="n">burning_neighbors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">focal_sum_mask</span><span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Transitions</span>
+        <span class="n">ignite</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">burning_neighbors</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">extinguish</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">new_state</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">new_state</span><span class="p">[</span><span class="n">ignite</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">new_state</span><span class="p">[</span><span class="n">extinguish</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"state"</span><span class="p">:</span> <span class="n">new_state</span><span class="p">}</span>
+
+<span class="c1"># Setup domain: 1000 x 1000</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">RasterBackend</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
+<span class="n">initial_forest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="n">initial_forest</span><span class="p">[</span><span class="mi">500</span><span class="p">,</span> <span class="mi">500</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># Ignite spark at center</span>
+<span class="n">backend</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"state"</span><span class="p">,</span> <span class="n">initial_forest</span><span class="p">)</span>
+
+<span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">start_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="c1"># Process in 250 x 250 blocks with a 1-cell halo</span>
+<span class="n">ForestFire</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">block_h</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">block_w</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">halo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">boundary_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h2 id="recipe-2-out-of-core-simulation-on-massive-grids">Recipe 2: Out-of-Core Simulation on Massive Grids<a class="headerlink" href="#recipe-2-out-of-core-simulation-on-massive-grids" title="Permanent link">&para;</a></h2>
+<p>Use this recipe when grid dimensions exceed physical RAM (e.g., <span class="arithmatex">\(50,000 \times 50,000 = 2.5\text{ billion cells}\)</span>).</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dissmodel.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dissmodel.geo.raster.cellular_automaton</span><span class="w"> </span><span class="kn">import</span> <span class="n">RasterCellularAutomaton</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span> <span class="n">DiskChunkedRasterCellularAutomaton</span>
+
+<span class="c1"># Cooperative mixin: needs RasterCellularAutomaton as the second base</span>
+<span class="c1"># (MRO) — single inheritance here fails at runtime (setup() has nowhere</span>
+<span class="c1"># to delegate through super()).</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MassiveGameOfLife</span><span class="p">(</span><span class="n">DiskChunkedRasterCellularAutomaton</span><span class="p">,</span> <span class="n">RasterCellularAutomaton</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="s2">"state"</span><span class="p">]</span>
+        <span class="n">alive_neighbors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">focal_sum_mask</span><span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">born</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">alive_neighbors</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">survive</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">alive_neighbors</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"state"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">born</span> <span class="o">|</span> <span class="n">survive</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)}</span>
+
+<span class="c1"># 1. Initialize disk workspace</span>
+<span class="n">ws_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/massive_gol_workspace"</span><span class="p">)</span>
+<span class="n">ws</span> <span class="o">=</span> <span class="n">MemmapRasterWorkspace</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">ws_path</span><span class="p">,</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">50_000</span><span class="p">,</span> <span class="mi">50_000</span><span class="p">),</span>
+    <span class="n">arrays</span><span class="o">=</span><span class="p">{</span><span class="s2">"state"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">},</span>
+    <span class="n">block_h</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">block_w</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">halo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 2. Seed initial state block-by-block (never materialize full grid)</span>
+<span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">ws</span><span class="o">.</span><span class="n">blocks</span><span class="p">():</span>
+    <span class="c1"># Deterministic local seeding</span>
+    <span class="n">local_data</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">block</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="n">ws</span><span class="o">.</span><span class="n">write_block_to_read_slot</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="n">local_data</span><span class="p">)</span>
+<span class="n">ws</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+<span class="c1"># 3. Execute out-of-core</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">start_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">MassiveGameOfLife</span><span class="p">(</span><span class="n">workspace</span><span class="o">=</span><span class="n">ws</span><span class="p">,</span> <span class="n">halo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">boundary_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">ws</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h2 id="recipe-3-out-of-core-ecological-model-with-historical-arrays-_past">Recipe 3: Out-of-Core Ecological Model with Historical Arrays (<code>_past</code>)<a class="headerlink" href="#recipe-3-out-of-core-ecological-model-with-historical-arrays-_past" title="Permanent link">&para;</a></h2>
+<p>This recipe shows how to run models that inherit from <code>SyncRasterModel</code> and depend on historical state tracking (<code>uso_past</code>, <code>alt_past</code>).</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dissmodel.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dissmodel.geo.raster.sync_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">SyncRasterModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">DiskChunkedSyncRasterModel</span><span class="p">,</span>
+    <span class="n">workspace_arrays_for_sync_model</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MangroveAccretion</span><span class="p">(</span><span class="n">SyncRasterModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Scientific model implementing coastal mangrove sediment accretion."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">accretion_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accretion_rate</span> <span class="o">=</span> <span class="n">accretion_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">land_use_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"uso"</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">alt_past</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alt_past"</span><span class="p">)</span>
+        <span class="n">uso</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"uso"</span><span class="p">)</span>
+
+        <span class="c1"># Elevate cells where mangrove exists (uso == 2)</span>
+        <span class="n">new_alt</span> <span class="o">=</span> <span class="n">alt_past</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">new_alt</span><span class="p">[</span><span class="n">uso</span> <span class="o">==</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">accretion_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"alt"</span><span class="p">,</span> <span class="n">new_alt</span><span class="p">)</span>
+
+<span class="c1"># Mixin inheritance: DiskChunkedSyncRasterModel MUST come first</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MangroveAccretionDisk</span><span class="p">(</span><span class="n">DiskChunkedSyncRasterModel</span><span class="p">,</span> <span class="n">MangroveAccretion</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Setup workspace with automatic '&lt;name&gt;_past' allocation</span>
+<span class="n">base_arrays</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"uso"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">}</span>
+<span class="n">declared_arrays</span> <span class="o">=</span> <span class="n">workspace_arrays_for_sync_model</span><span class="p">(</span><span class="n">base_arrays</span><span class="p">,</span> <span class="n">land_use_types</span><span class="o">=</span><span class="p">[</span><span class="s2">"uso"</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">])</span>
+
+<span class="n">ws</span> <span class="o">=</span> <span class="n">MemmapRasterWorkspace</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/mangrove_workspace"</span><span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">),</span>
+    <span class="n">arrays</span><span class="o">=</span><span class="n">declared_arrays</span><span class="p">,</span>
+    <span class="n">block_h</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">block_w</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">halo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">start_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">MangroveAccretionDisk</span><span class="p">(</span>
+    <span class="n">workspace</span><span class="o">=</span><span class="n">ws</span><span class="p">,</span>
+    <span class="n">accretion_rate</span><span class="o">=</span><span class="mf">0.08</span><span class="p">,</span>
+    <span class="n">boundary_value</span><span class="o">=</span><span class="p">{</span><span class="s2">"uso"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">:</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">ws</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h2 id="recipe-4-streaming-real-world-geotiffs-in-and-out">Recipe 4: Streaming Real-World GeoTIFFs In and Out<a class="headerlink" href="#recipe-4-streaming-real-world-geotiffs-in-and-out" title="Permanent link">&para;</a></h2>
+<p>Stream multi-gigabyte raster files into a workspace without loading them into memory, run a simulation, and export to Cloud-Optimized GeoTIFF.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">load_geotiff_into_workspace</span><span class="p">,</span>
+    <span class="n">save_workspace_to_geotiff</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 1. Inspect raster metadata without loading pixels</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rasterio</span>
+<span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"study_area.tif"</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+    <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">width</span>
+    <span class="n">crs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">crs</span>
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">transform</span>
+
+<span class="c1"># 2. Create workspace matching GeoTIFF dimensions</span>
+<span class="n">ws</span> <span class="o">=</span> <span class="n">MemmapRasterWorkspace</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/geotiff_workspace"</span><span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span>
+    <span class="n">arrays</span><span class="o">=</span><span class="p">{</span><span class="s2">"uso"</span><span class="p">:</span> <span class="s2">"int16"</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">:</span> <span class="s2">"float32"</span><span class="p">},</span>
+    <span class="n">block_h</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">block_w</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">halo</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 3. Stream data block-by-block (band 1 -&gt; uso, band 2 -&gt; alt)</span>
+<span class="n">load_geotiff_into_workspace</span><span class="p">(</span>
+    <span class="n">ws</span><span class="p">,</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">"study_area.tif"</span><span class="p">,</span>
+    <span class="n">band_spec</span><span class="o">=</span><span class="p">[(</span><span class="s2">"uso"</span><span class="p">,</span> <span class="s2">"int16"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="s2">"alt"</span><span class="p">,</span> <span class="s2">"float32"</span><span class="p">,</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">)],</span>
+<span class="p">)</span>
+
+<span class="c1"># 4. ... Run simulation models on workspace ...</span>
+
+<span class="c1"># 5. Export updated state to GeoTIFF</span>
+<span class="n">save_workspace_to_geotiff</span><span class="p">(</span>
+    <span class="n">ws</span><span class="p">,</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">"output_step_10.tif"</span><span class="p">,</span>
+    <span class="n">bands</span><span class="o">=</span><span class="p">[</span><span class="s2">"uso"</span><span class="p">,</span> <span class="s2">"alt"</span><span class="p">],</span>
+    <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
+    <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span>
+    <span class="n">compress</span><span class="o">=</span><span class="s2">"lzw"</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="recipe-5-ingesting-zarr-cubes-and-multi-tile-layouts">Recipe 5: Ingesting Zarr Cubes and Multi-Tile Layouts<a class="headerlink" href="#recipe-5-ingesting-zarr-cubes-and-multi-tile-layouts" title="Permanent link">&para;</a></h2>
+<p>Seamlessly assemble non-contiguous satellite tiles into a single unified workspace.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span> <span class="n">load_zarr_tiles_into_workspace</span>
+
+<span class="c1"># Define multi-tile layout (e.g. from disscube CubeClient.tile_layout())</span>
+<span class="n">tile_layout</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"data/tiles/tile_001.zarr"</span><span class="p">,</span>
+        <span class="s2">"variable"</span><span class="p">:</span> <span class="s2">"land_cover"</span><span class="p">,</span>
+        <span class="s2">"row_off"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"col_off"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"height"</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+        <span class="s2">"width"</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"data/tiles/tile_002.zarr"</span><span class="p">,</span>
+        <span class="s2">"variable"</span><span class="p">:</span> <span class="s2">"land_cover"</span><span class="p">,</span>
+        <span class="s2">"row_off"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"col_off"</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+        <span class="s2">"height"</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+        <span class="s2">"width"</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">ws</span> <span class="o">=</span> <span class="n">MemmapRasterWorkspace</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/zarr_mosaic_workspace"</span><span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">),</span>
+    <span class="n">arrays</span><span class="o">=</span><span class="p">{</span><span class="s2">"land_cover"</span><span class="p">:</span> <span class="s2">"uint8"</span><span class="p">},</span>
+    <span class="n">block_h</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">block_w</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+    <span class="n">halo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Stitch tiles directly into the workspace</span>
+<span class="n">load_zarr_tiles_into_workspace</span><span class="p">(</span>
+    <span class="n">ws</span><span class="p">,</span>
+    <span class="n">tiles</span><span class="o">=</span><span class="n">tile_layout</span><span class="p">,</span>
+    <span class="n">array</span><span class="o">=</span><span class="s2">"land_cover"</span><span class="p">,</span>
+    <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">skip_empty_blocks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="recipe-6-unbounded-hydrological-connectivity-with-iterative-sweeps">Recipe 6: Unbounded Hydrological Connectivity with Iterative Sweeps<a class="headerlink" href="#recipe-6-unbounded-hydrological-connectivity-with-iterative-sweeps" title="Permanent link">&para;</a></h2>
+<p>Solve tidal flooding or basin routing where water spreads across unlimited block boundaries until reaching an equilibrium point.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">binary_propagation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span> <span class="n">sweep_until_convergence</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">tidal_connectivity_rule</span><span class="p">(</span><span class="n">window</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">halo</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Expands water connectivity through permeable lowlands."""</span>
+    <span class="n">water</span> <span class="o">=</span> <span class="n">window</span><span class="p">[</span><span class="s2">"water"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">permeable</span> <span class="o">=</span> <span class="n">window</span><span class="p">[</span><span class="s2">"permeable"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="c1"># Propagate water connectivity within the halo window</span>
+    <span class="n">flooded</span> <span class="o">=</span> <span class="n">binary_propagation</span><span class="p">(</span><span class="n">water</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">permeable</span><span class="p">)</span>
+
+    <span class="c1"># Trim halo and return updated core</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"water"</span><span class="p">:</span> <span class="n">flooded</span><span class="p">[</span><span class="n">halo</span><span class="p">:</span><span class="o">-</span><span class="n">halo</span><span class="p">,</span> <span class="n">halo</span><span class="p">:</span><span class="o">-</span><span class="n">halo</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)}</span>
+
+<span class="n">ws</span> <span class="o">=</span> <span class="n">MemmapRasterWorkspace</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/tidal_ws"</span><span class="p">),</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="mi">4000</span><span class="p">),</span>
+    <span class="n">arrays</span><span class="o">=</span><span class="p">{</span><span class="s2">"water"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="s2">"permeable"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">},</span>
+    <span class="n">block_h</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">block_w</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">halo</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Execute Gauss-Seidel sweeps until entire domain reaches fixed point</span>
+<span class="n">info</span> <span class="o">=</span> <span class="n">sweep_until_convergence</span><span class="p">(</span>
+    <span class="n">ws</span><span class="p">,</span>
+    <span class="n">rule</span><span class="o">=</span><span class="n">tidal_connectivity_rule</span><span class="p">,</span>
+    <span class="n">boundary_value</span><span class="o">=</span><span class="p">{</span><span class="s2">"water"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"permeable"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Converged in </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'sweeps'</span><span class="p">]</span><span class="si">}</span><span class="s2"> sweeps across </span><span class="si">{</span><span class="n">info</span><span class="p">[</span><span class="s1">'blocks_changed_total'</span><span class="p">]</span><span class="si">}</span><span class="s2"> block updates."</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="recipe-7-visualizing-giant-rasters-efficiently">Recipe 7: Visualizing Giant Rasters Efficiently<a class="headerlink" href="#recipe-7-visualizing-giant-rasters-efficiently" title="Permanent link">&para;</a></h2>
+<p>Render and save checkpoints on massive rasters without CPU/RAM bottlenecks.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">dissmodel.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemmapRasterWorkspace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">haloexec.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">CheckpointRasterMap</span>
+
+<span class="n">ws</span> <span class="o">=</span> <span class="n">MemmapRasterWorkspace</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/my_large_workspace"</span><span class="p">))</span>
+
+<span class="c1"># 1. Create decimated backend adapter (downsample by 4x for rendering)</span>
+<span class="n">downsampled_backend</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">as_backend</span><span class="p">(</span><span class="n">stride</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=-</span><span class="mf">9999.0</span><span class="p">)</span>
+
+<span class="c1"># 2. Configure CheckpointRasterMap to save PNGs ONLY on milestone years</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">start_time</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">end_time</span><span class="o">=</span><span class="mi">2050</span><span class="p">)</span>
+<span class="n">CheckpointRasterMap</span><span class="p">(</span>
+    <span class="n">backend</span><span class="o">=</span><span class="n">downsampled_backend</span><span class="p">,</span>
+    <span class="n">band</span><span class="o">=</span><span class="s2">"uso"</span><span class="p">,</span>
+    <span class="n">color_map</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">"#ffffff"</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">"#2f8f6e"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"#0000ff"</span><span class="p">},</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">"Empty"</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">"Forest"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"Water"</span><span class="p">},</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Simulation Decimated View"</span><span class="p">,</span>
+    <span class="n">save_frames</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">save_steps</span><span class="o">=</span><span class="p">[</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2010</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="mi">2050</span><span class="p">],</span>  <span class="c1"># Render only these years!</span>
+    <span class="n">auto_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">env</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h2 id="recipe-8-profiling-real-memory-footprint-rssanon-vs-rssfile">Recipe 8: Profiling Real Memory Footprint (<code>RssAnon</code> vs <code>RssFile</code>)<a class="headerlink" href="#recipe-8-profiling-real-memory-footprint-rssanon-vs-rssfile" title="Permanent link">&para;</a></h2>
+<p>Accurately monitor heap usage versus kernel file page cache in memory-mapped simulations.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">report_memory_breakdown</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Parses Linux /proc/self/status for anonymous vs file-backed RSS."""</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"/proc/self/status"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"RssAnon:"</span><span class="p">):</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s2">"RssAnon_MB"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">1024.0</span>
+            <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"RssFile:"</span><span class="p">):</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s2">"RssFile_MB"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">1024.0</span>
+            <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"VmRSS:"</span><span class="p">):</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="s2">"VmRSS_MB"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mf">1024.0</span>
+    <span class="k">return</span> <span class="n">metrics</span>
+
+<span class="n">mem</span> <span class="o">=</span> <span class="n">report_memory_breakdown</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"True Heap Memory (RssAnon): </span><span class="si">{</span><span class="n">mem</span><span class="p">[</span><span class="s1">'RssAnon_MB'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"OS File Page Cache (RssFile): </span><span class="si">{</span><span class="n">mem</span><span class="p">[</span><span class="s1">'RssFile_MB'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total Combined RSS (VmRSS): </span><span class="si">{</span><span class="n">mem</span><span class="p">[</span><span class="s1">'VmRSS_MB'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB"</span><span class="p">)</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

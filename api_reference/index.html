@@ -1,0 +1,2404 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Domain decomposition with halo zones for large-scale cellular automata">
+      
+      
+      
+        <link rel="canonical" href="https://dissmodel.github.io/haloexec/api_reference/">
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../tutorials_and_recipes/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>API Reference - haloexec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="haloexec" class="md-header__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            haloexec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="green"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="haloexec" class="md-nav__button md-logo" aria-label="haloexec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    haloexec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/DisSModel/haloexec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    haloexec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../theory_and_concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Theory & Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture & Design Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Block">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make_blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        make_blocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="make_blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolve_boundary_value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_boundary_value
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="resolve_boundary_value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returns_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskworkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.workspace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.workspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#halowindow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HaloWindow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#halo_window" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        halo_window
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memmaprasterworkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemmapRasterWorkspace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MemmapRasterWorkspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#class-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Class Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Class Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#constructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constructors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Constructors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instance-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instance Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instance Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fill
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read_block_with_halo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_block_with_halo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_block_core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_block_core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read_block_core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_block_core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_block_to_read_slot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_block_to_read_slot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_block_core_in_place" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_block_core_in_place
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swap_buffers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swap_buffers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        checkpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flush" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flush
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#as_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        as_backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskbackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workspacerasterbackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkspaceRasterBackend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WorkspaceRasterBackend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#properties_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskconvergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.convergence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.convergence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sweep_until_convergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sweep_until_convergence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sweep_until_convergence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returns_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raises
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdisksync_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.sync_model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.sync_model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workspace_arrays_for_sync_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        workspace_arrays_for_sync_model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diskchunkedsyncrastermodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DiskChunkedSyncRasterModel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskcellular_automaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.cellular_automaton
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.cellular_automaton">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diskchunkedrastercellularautomaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DiskChunkedRasterCellularAutomaton
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskiogeotiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.io.geotiff
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.io.geotiff">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load_geotiff_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_geotiff_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_geotiffs_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_geotiffs_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save_workspace_to_geotiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        save_workspace_to_geotiff
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskiozarr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.io.zarr
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.io.zarr">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load_zarr_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_zarr_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_zarr_tiles_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_zarr_tiles_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecramcellular_automaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.ram.cellular_automaton
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.ram.cellular_automaton">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#halochunkedrastercellularautomaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HaloChunkedRasterCellularAutomaton
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecramsync_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.ram.sync_model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.ram.sync_model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#halochunkedsyncrastermodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HaloChunkedSyncRasterModel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecvisualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.visualization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.visualization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkpointrastermap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CheckpointRasterMap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials_and_recipes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials & Recipes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Block">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make_blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        make_blocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="make_blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resolve_boundary_value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resolve_boundary_value
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="resolve_boundary_value">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returns_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskworkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.workspace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.workspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#halowindow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HaloWindow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#halo_window" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        halo_window
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memmaprasterworkspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemmapRasterWorkspace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MemmapRasterWorkspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#class-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Class Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Class Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#constructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constructors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Constructors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instance-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instance Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instance Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fill
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read_block_with_halo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_block_with_halo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_block_core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_block_core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read_block_core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        read_block_core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_block_to_read_slot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_block_to_read_slot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write_block_core_in_place" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        write_block_core_in_place
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#swap_buffers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        swap_buffers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checkpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        checkpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flush" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flush
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#as_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        as_backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskbackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workspacerasterbackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkspaceRasterBackend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="WorkspaceRasterBackend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#properties_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskconvergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.convergence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.convergence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sweep_until_convergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sweep_until_convergence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sweep_until_convergence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#returns_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Returns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raises
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdisksync_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.sync_model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.sync_model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workspace_arrays_for_sync_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        workspace_arrays_for_sync_model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diskchunkedsyncrastermodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DiskChunkedSyncRasterModel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskcellular_automaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.cellular_automaton
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.cellular_automaton">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diskchunkedrastercellularautomaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DiskChunkedRasterCellularAutomaton
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskiogeotiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.io.geotiff
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.io.geotiff">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load_geotiff_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_geotiff_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_geotiffs_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_geotiffs_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save_workspace_to_geotiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        save_workspace_to_geotiff
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecdiskiozarr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.disk.io.zarr
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.disk.io.zarr">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load_zarr_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_zarr_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_zarr_tiles_into_workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_zarr_tiles_into_workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecramcellular_automaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.ram.cellular_automaton
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.ram.cellular_automaton">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#halochunkedrastercellularautomaton" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HaloChunkedRasterCellularAutomaton
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecramsync_model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.ram.sync_model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.ram.sync_model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#halochunkedsyncrastermodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HaloChunkedSyncRasterModel
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#haloexecvisualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        haloexec.visualization
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="haloexec.visualization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkpointrastermap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CheckpointRasterMap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
+<p>This document provides a comprehensive, exhaustive reference for all public classes, functions, and interfaces in the <code>haloexec</code> package.</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#haloexecengine">haloexec.engine</a></li>
+<li><a href="#block">Block</a></li>
+<li><a href="#make_blocks">make_blocks</a></li>
+<li><a href="#resolve_boundary_value">resolve_boundary_value</a></li>
+<li><a href="#haloexecdiskworkspace">haloexec.disk.workspace</a></li>
+<li><a href="#halowindow">HaloWindow</a></li>
+<li><a href="#halo_window">halo_window</a></li>
+<li><a href="#memmaprasterworkspace">MemmapRasterWorkspace</a></li>
+<li><a href="#haloexecdiskbackend">haloexec.disk.backend</a></li>
+<li><a href="#workspacerasterbackend">WorkspaceRasterBackend</a></li>
+<li><a href="#haloexecdiskconvergence">haloexec.disk.convergence</a></li>
+<li><a href="#sweep_until_convergence">sweep_until_convergence</a></li>
+<li><a href="#haloexecdisksync_model">haloexec.disk.sync_model</a></li>
+<li><a href="#workspace_arrays_for_sync_model">workspace_arrays_for_sync_model</a></li>
+<li><a href="#diskchunkedsyncrastermodel">DiskChunkedSyncRasterModel</a></li>
+<li><a href="#haloexecdiskcellular_automaton">haloexec.disk.cellular_automaton</a></li>
+<li><a href="#diskchunkedrastercellularautomaton">DiskChunkedRasterCellularAutomaton</a></li>
+<li><a href="#haloexecdiskiogeotiff">haloexec.disk.io.geotiff</a></li>
+<li><a href="#load_geotiff_into_workspace">load_geotiff_into_workspace</a></li>
+<li><a href="#load_geotiffs_into_workspace">load_geotiffs_into_workspace</a></li>
+<li><a href="#save_workspace_to_geotiff">save_workspace_to_geotiff</a></li>
+<li><a href="#haloexecdiskiozarr">haloexec.disk.io.zarr</a></li>
+<li><a href="#load_zarr_into_workspace">load_zarr_into_workspace</a></li>
+<li><a href="#load_zarr_tiles_into_workspace">load_zarr_tiles_into_workspace</a></li>
+<li><a href="#haloexecramcellular_automaton">haloexec.ram.cellular_automaton</a></li>
+<li><a href="#halochunkedrastercellularautomaton">HaloChunkedRasterCellularAutomaton</a></li>
+<li><a href="#haloexecramsync_model">haloexec.ram.sync_model</a></li>
+<li><a href="#halochunkedsyncrastermodel">HaloChunkedSyncRasterModel</a></li>
+<li><a href="#haloexecvisualization">haloexec.visualization</a></li>
+<li><a href="#checkpointrastermap">CheckpointRasterMap</a></li>
+</ul>
+<hr />
+<h2 id="haloexecengine"><code>haloexec.engine</code><a class="headerlink" href="#haloexecengine" title="Permanent link">&para;</a></h2>
+<p>Domain decomposition primitives with no external dependencies.</p>
+<h3 id="block"><code>Block</code><a class="headerlink" href="#block" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Block</span><span class="p">:</span>
+    <span class="n">r0</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">r1</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">c0</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">c1</span><span class="p">:</span> <span class="nb">int</span>
+</code></pre></div>
+Represents an immutable 2D rectangular sub-domain slice <span class="arithmatex">\([r_0:r_1, c_0:c_1)\)</span> in global grid coordinates.</p>
+<h4 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>shape -&gt; tuple[int, int]</code></strong>: Returns <code>(r1 - r0, c1 - c0)</code>.</li>
+<li><strong><code>core -&gt; tuple[slice, slice]</code></strong>: Returns <code>(slice(r0, r1), slice(c0, c1))</code>, ready for direct NumPy indexing into global arrays or memory-mapped files.</li>
+</ul>
+<hr />
+<h3 id="make_blocks"><code>make_blocks</code><a class="headerlink" href="#make_blocks" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">make_blocks</span><span class="p">(</span><span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">block_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">block_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Block</span><span class="p">]</span>
+</code></pre></div>
+Partitions a 2D global grid of dimensions <code>(height, width)</code> into regular sub-domains of maximum size <code>(block_h, block_w)</code>.</p>
+<h4 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>height</code></strong> (<em>int</em>): Global domain row count.</li>
+<li><strong><code>width</code></strong> (<em>int</em>): Global domain column count.</li>
+<li><strong><code>block_h</code></strong> (<em>int</em>): Target block height.</li>
+<li><strong><code>block_w</code></strong> (<em>int</em>): Target block width.</li>
+</ul>
+<h4 id="returns">Returns<a class="headerlink" href="#returns" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>list[Block]</code></strong>: Sequential list of blocks covering the entire domain. Edge blocks along the south and east boundaries contain residual dimensions when dimensions are not evenly divisible.</li>
+</ul>
+<hr />
+<h3 id="resolve_boundary_value"><code>resolve_boundary_value</code><a class="headerlink" href="#resolve_boundary_value" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">resolve_boundary_value</span><span class="p">(</span><span class="n">boundary_value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+</code></pre></div>
+Resolves the external ghost cell fill value for a given array.</p>
+<h4 id="parameters_1">Parameters<a class="headerlink" href="#parameters_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>boundary_value</code></strong> (<em>dict | float</em>): Scalar constant or dictionary mapping array names to fill values.</li>
+<li><strong><code>name</code></strong> (<em>str</em>): Name of the array to resolve.</li>
+</ul>
+<h4 id="returns_1">Returns<a class="headerlink" href="#returns_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>float</code></strong>: Resolved boundary sentinel. If <code>name</code> ends with <code>"_past"</code> and does not have an explicit key in a <code>boundary_value</code> dict, automatically falls back to the base name without <code>"_past"</code>. If not found, defaults to <code>0</code>.</li>
+</ul>
+<hr />
+<h2 id="haloexecdiskworkspace"><code>haloexec.disk.workspace</code><a class="headerlink" href="#haloexecdiskworkspace" title="Permanent link">&para;</a></h2>
+<p>Manager of two-dimensional on-disk arrays based on <code>np.memmap</code>, with double-buffering and checkpoints.</p>
+<h3 id="halowindow"><code>HaloWindow</code><a class="headerlink" href="#halowindow" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HaloWindow</span><span class="p">:</span>
+    <span class="n">global_slices</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="nb">slice</span><span class="p">]</span>
+    <span class="n">core_offset</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+</code></pre></div>
+Describes a disk read window clipped at domain boundaries.
+- <strong><code>global_slices</code></strong>: Slice coordinates to read from the disk array.
+- <strong><code>core_offset</code></strong>: <code>(row_offset, col_offset)</code> of the core block within the read window.</p>
+<hr />
+<h3 id="halo_window"><code>halo_window</code><a class="headerlink" href="#halo_window" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">halo_window</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Block</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">halo</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HaloWindow</span>
+</code></pre></div>
+Computes the clipped read window coordinates for a block with halo <span class="arithmatex">\(h\)</span> across a domain of shape <span class="arithmatex">\((H, W)\)</span>.</p>
+<hr />
+<h3 id="memmaprasterworkspace"><code>MemmapRasterWorkspace</code><a class="headerlink" href="#memmaprasterworkspace" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MemmapRasterWorkspace</span><span class="p">:</span>
+    <span class="n">METADATA</span> <span class="o">=</span> <span class="s2">"metadata.json"</span>
+    <span class="n">CHECKPOINT</span> <span class="o">=</span> <span class="s2">"checkpoint.json"</span>
+</code></pre></div>
+<h4 id="class-methods">Class Methods<a class="headerlink" href="#class-methods" title="Permanent link">&para;</a></h4>
+<h5 id="create"><code>create</code><a class="headerlink" href="#create" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span>
+    <span class="bp">cls</span><span class="p">,</span>
+    <span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">arrays</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">],</span>
+    <span class="n">block_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">block_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">halo</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MemmapRasterWorkspace</span>
+</code></pre></div>
+Initializes a new on-disk workspace directory structure containing double-buffered <code>.dat</code> files for slots <code>"a"</code> and <code>"b"</code>.</p>
+<ul>
+<li>Files are allocated as POSIX sparse files (unwritten blocks consume 0 disk space).</li>
+<li>Raises <code>FileExistsError</code> if <code>root</code> exists and is non-empty.</li>
+</ul>
+<h4 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h4>
+<h5 id="__init__"><code>__init__</code><a class="headerlink" href="#__init__" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Opens an existing initialized workspace from disk. Loads <code>metadata.json</code> and <code>checkpoint.json</code>.</p>
+<h4 id="instance-methods">Instance Methods<a class="headerlink" href="#instance-methods" title="Permanent link">&para;</a></h4>
+<h5 id="blocks"><code>blocks</code><a class="headerlink" href="#blocks" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Block</span><span class="p">]</span>
+</code></pre></div>
+Returns all domain blocks partitioned according to the workspace's metadata.</p>
+<h5 id="fill"><code>fill</code><a class="headerlink" href="#fill" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">slot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Populates an entire array layer in the specified slot (defaults to active <code>read_slot</code>). Intended for initial state setup.</p>
+<h5 id="read_block_with_halo"><code>read_block_with_halo</code><a class="headerlink" href="#read_block_with_halo" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_block_with_halo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">Block</span><span class="p">,</span> <span class="n">boundary_value</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+</code></pre></div>
+Extracts the halo window for all arrays from the active <code>read_slot</code>. Populates boundary ghost cells with <code>boundary_value</code>.</p>
+<h5 id="write_block_core"><code>write_block_core</code><a class="headerlink" href="#write_block_core" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">write_block_core</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">Block</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Writes the updated core regions (excluding halo) into the <strong>write slot</strong> (the inactive ping-pong slot).</p>
+<h5 id="read_block_core"><code>read_block_core</code><a class="headerlink" href="#read_block_core" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">read_block_core</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">Block</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</code></pre></div>
+Reads strictly the core region of an array from the active <code>read_slot</code>.</p>
+<h5 id="write_block_to_read_slot"><code>write_block_to_read_slot</code><a class="headerlink" href="#write_block_to_read_slot" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">write_block_to_read_slot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">Block</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Writes core block data directly into the active <strong>read slot</strong>. Reserved for synchronizing <code>&lt;name&gt;_past</code> arrays.</p>
+<h5 id="write_block_core_in_place"><code>write_block_core_in_place</code><a class="headerlink" href="#write_block_core_in_place" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">write_block_core_in_place</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">:</span> <span class="n">Block</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Writes core block data directly into the active <strong>read slot</strong>, making changes immediately visible to subsequent blocks in the same pass (used for Gauss-Seidel convergence).</p>
+<h5 id="swap_buffers"><code>swap_buffers</code><a class="headerlink" href="#swap_buffers" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">swap_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Logically inverts the active <code>read_slot</code> (<code>"a"</code> <span class="arithmatex">\(\leftrightarrow\)</span> <code>"b"</code>).</p>
+<h5 id="checkpoint"><code>checkpoint</code><a class="headerlink" href="#checkpoint" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Persists the current simulation step and active slot atomically to <code>checkpoint.json</code>.</p>
+<h5 id="snapshot"><code>snapshot</code><a class="headerlink" href="#snapshot" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+</code></pre></div>
+Materializes a full copy of an array from the active read slot in RAM (use only for validation or small grids).</p>
+<h5 id="flush"><code>flush</code><a class="headerlink" href="#flush" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Forces an explicit sync of memory-mapped buffers to physical storage.</p>
+<h5 id="as_backend"><code>as_backend</code><a class="headerlink" href="#as_backend" title="Permanent link">&para;</a></h5>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">as_backend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nodata_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WorkspaceRasterBackend</span>
+</code></pre></div>
+Creates a lightweight <code>RasterBackend</code> adapter for visualization and inspection.</p>
+<hr />
+<h2 id="haloexecdiskbackend"><code>haloexec.disk.backend</code><a class="headerlink" href="#haloexecdiskbackend" title="Permanent link">&para;</a></h2>
+<h3 id="workspacerasterbackend"><code>WorkspaceRasterBackend</code><a class="headerlink" href="#workspacerasterbackend" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">WorkspaceRasterBackend</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+        <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">nodata_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Exposes a <code>MemmapRasterWorkspace</code> through the <code>RasterBackend</code> duck-type interface without duplicating memory.</p>
+<h4 id="parameters_2">Parameters<a class="headerlink" href="#parameters_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>workspace</code></strong> (<em>MemmapRasterWorkspace</em>): The underlying disk workspace.</li>
+<li><strong><code>stride</code></strong> (<em>int</em>): Spatial subsampling decimation factor (<span class="arithmatex">\(1 = \text{full resolution}\)</span>, <span class="arithmatex">\(2 = 50\%\)</span>, etc.).</li>
+<li><strong><code>nodata_value</code></strong> (<em>float | int | None</em>): Optional sentinel for extent mask resolution.</li>
+</ul>
+<h4 id="properties_1">Properties<a class="headerlink" href="#properties_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>arrays -&gt; dict[str, np.ndarray]</code></strong>: Dictionary of memory-mapped views onto the active read slot, sliced with <code>::stride</code>.</li>
+<li><strong><code>shape -&gt; tuple[int, int]</code></strong>: Scaled grid shape <code>(H // stride, W // stride)</code>.</li>
+</ul>
+<hr />
+<h2 id="haloexecdiskconvergence"><code>haloexec.disk.convergence</code><a class="headerlink" href="#haloexecdiskconvergence" title="Permanent link">&para;</a></h2>
+<h3 id="sweep_until_convergence"><code>sweep_until_convergence</code><a class="headerlink" href="#sweep_until_convergence" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sweep_until_convergence</span><span class="p">(</span>
+    <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">rule</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span>
+    <span class="n">boundary_value</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">max_sweeps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+Executes iterative block sweeps until an entire global pass produces zero modified blocks.</p>
+<h4 id="parameters_3">Parameters<a class="headerlink" href="#parameters_3" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>workspace</code></strong> (<em>MemmapRasterWorkspace</em>): Target workspace.</li>
+<li><strong><code>rule</code></strong> (<em>Callable</em>): Transition function receiving a halo window dictionary and returning updated core arrays.</li>
+<li><strong><code>boundary_value</code></strong>: Fill sentinel for external boundary ghost cells.</li>
+<li><strong><code>max_sweeps</code></strong> (<em>int, optional</em>): Safety limit. Defaults to <span class="arithmatex">\(\text{number of blocks} + 1\)</span>.</li>
+</ul>
+<h4 id="returns_2">Returns<a class="headerlink" href="#returns_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>dict</code></strong>: Summary containing <code>{"sweeps": int, "blocks_changed_total": int, "converged": True}</code>.</li>
+</ul>
+<h4 id="raises">Raises<a class="headerlink" href="#raises" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong><code>RuntimeError</code></strong>: If convergence is not achieved within <code>max_sweeps</code>.</li>
+</ul>
+<hr />
+<h2 id="haloexecdisksync_model"><code>haloexec.disk.sync_model</code><a class="headerlink" href="#haloexecdisksync_model" title="Permanent link">&para;</a></h2>
+<h3 id="workspace_arrays_for_sync_model"><code>workspace_arrays_for_sync_model</code><a class="headerlink" href="#workspace_arrays_for_sync_model" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">workspace_arrays_for_sync_model</span><span class="p">(</span>
+    <span class="n">base</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">],</span>
+    <span class="n">land_use_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span>
+</code></pre></div>
+Constructs the array declaration dictionary for a workspace, automatically adding <code>&lt;name&gt;_past</code> entries for all variables in <code>land_use_types</code>.</p>
+<hr />
+<h3 id="diskchunkedsyncrastermodel"><code>DiskChunkedSyncRasterModel</code><a class="headerlink" href="#diskchunkedsyncrastermodel" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DiskChunkedSyncRasterModel</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+        <span class="n">halo</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">boundary_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Cooperative mixin for executing <code>SyncRasterModel</code> subclasses (e.g., <code>FloodModel</code>) out-of-core on a <code>MemmapRasterWorkspace</code>.</p>
+<ul>
+<li>Must precede the scientific model in class inheritance order:
+  <code>class FloodModelDisk(DiskChunkedSyncRasterModel, FloodModel): pass</code></li>
+<li>Handles block-by-block <code>_past</code> synchronization in <code>pre_execute()</code> and <code>post_execute()</code>.</li>
+</ul>
+<hr />
+<h2 id="haloexecdiskcellular_automaton"><code>haloexec.disk.cellular_automaton</code><a class="headerlink" href="#haloexecdiskcellular_automaton" title="Permanent link">&para;</a></h2>
+<h3 id="diskchunkedrastercellularautomaton"><code>DiskChunkedRasterCellularAutomaton</code><a class="headerlink" href="#diskchunkedrastercellularautomaton" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DiskChunkedRasterCellularAutomaton</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+        <span class="n">halo</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">boundary_value</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">state_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"state"</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Cooperative mixin for executing <code>RasterCellularAutomaton</code> subclasses (defined with <code>rule(arrays) -&gt; dict</code>) out-of-core on a <code>MemmapRasterWorkspace</code>.</p>
+<hr />
+<h2 id="haloexecdiskiogeotiff"><code>haloexec.disk.io.geotiff</code><a class="headerlink" href="#haloexecdiskiogeotiff" title="Permanent link">&para;</a></h2>
+<h3 id="load_geotiff_into_workspace"><code>load_geotiff_into_workspace</code><a class="headerlink" href="#load_geotiff_into_workspace" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_geotiff_into_workspace</span><span class="p">(</span>
+    <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">band_spec</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Loads a single GeoTIFF file into a workspace block-by-block using windowed streaming.</p>
+<h3 id="load_geotiffs_into_workspace"><code>load_geotiffs_into_workspace</code><a class="headerlink" href="#load_geotiffs_into_workspace" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_geotiffs_into_workspace</span><span class="p">(</span>
+    <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Loads multiple GeoTIFF files into a workspace simultaneously across blocks, validating shape and CRS alignment.</p>
+<h3 id="save_workspace_to_geotiff"><code>save_workspace_to_geotiff</code><a class="headerlink" href="#save_workspace_to_geotiff" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save_workspace_to_geotiff</span><span class="p">(</span>
+    <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">bands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">transform</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">crs</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="s2">"EPSG:31984"</span><span class="p">,</span>
+    <span class="n">compress</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"lzw"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Exports workspace arrays from the active read slot directly into a tiled Cloud-Optimized GeoTIFF.</p>
+<hr />
+<h2 id="haloexecdiskiozarr"><code>haloexec.disk.io.zarr</code><a class="headerlink" href="#haloexecdiskiozarr" title="Permanent link">&para;</a></h2>
+<h3 id="load_zarr_into_workspace"><code>load_zarr_into_workspace</code><a class="headerlink" href="#load_zarr_into_workspace" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_zarr_into_workspace</span><span class="p">(</span>
+    <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">store</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">variable_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">time_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Streams a Zarr store into a workspace block-by-block, normalizing dimension axis orders.</p>
+<h3 id="load_zarr_tiles_into_workspace"><code>load_zarr_tiles_into_workspace</code><a class="headerlink" href="#load_zarr_tiles_into_workspace" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_zarr_tiles_into_workspace</span><span class="p">(</span>
+    <span class="n">workspace</span><span class="p">:</span> <span class="n">MemmapRasterWorkspace</span><span class="p">,</span>
+    <span class="n">tiles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">array</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fill</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">skip_empty_blocks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Assembles multiple distinct Zarr tiles into a unified continuous workspace array.</p>
+<hr />
+<h2 id="haloexecramcellular_automaton"><code>haloexec.ram.cellular_automaton</code><a class="headerlink" href="#haloexecramcellular_automaton" title="Permanent link">&para;</a></h2>
+<h3 id="halochunkedrastercellularautomaton"><code>HaloChunkedRasterCellularAutomaton</code><a class="headerlink" href="#halochunkedrastercellularautomaton" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">HaloChunkedRasterCellularAutomaton</span><span class="p">(</span><span class="n">RasterCellularAutomaton</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">backend</span><span class="p">:</span> <span class="n">RasterBackend</span><span class="p">,</span>
+        <span class="n">block_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">block_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">halo</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">boundary_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">state_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"state"</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+In-memory domain decomposition execution engine for <code>RasterCellularAutomaton</code>. Preserves the <code>rule(arrays: dict) -&gt; dict</code> interface.</p>
+<hr />
+<h2 id="haloexecramsync_model"><code>haloexec.ram.sync_model</code><a class="headerlink" href="#haloexecramsync_model" title="Permanent link">&para;</a></h2>
+<h3 id="halochunkedsyncrastermodel"><code>HaloChunkedSyncRasterModel</code><a class="headerlink" href="#halochunkedsyncrastermodel" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">HaloChunkedSyncRasterModel</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">backend</span><span class="p">:</span> <span class="n">RasterBackend</span><span class="p">,</span>
+        <span class="n">block_h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">block_w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">halo</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">boundary_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+In-memory cooperative mixin for executing <code>SyncRasterModel</code> subclasses in blocks with halo.</p>
+<hr />
+<h2 id="haloexecvisualization"><code>haloexec.visualization</code><a class="headerlink" href="#haloexecvisualization" title="Permanent link">&para;</a></h2>
+<h3 id="checkpointrastermap"><code>CheckpointRasterMap</code><a class="headerlink" href="#checkpointrastermap" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CheckpointRasterMap</span><span class="p">(</span><span class="n">RasterMap</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">save_steps</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+Subclass of <code>RasterMap</code> that restricts map rendering and PNG export to an arbitrary set of simulation steps (<code>save_steps</code>).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
