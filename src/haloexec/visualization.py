@@ -7,7 +7,8 @@ ou anos específicos da simulação (evitando overhead em passos intermediários
 
 from __future__ import annotations
 
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 try:
     from dissmodel.visualization.raster_map import RasterMap

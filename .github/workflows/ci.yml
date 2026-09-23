@@ -2,54 +2,124 @@ name: CI
 
 on:
   push:
-    branches: ["main", "develop", "workspace-esparso"]
+    branches: [main, develop]
   pull_request:
-    branches: ["main", "develop"]
+    branches: [main, develop]
+  workflow_dispatch:  # allows running the workflow manually
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff
+        # keep in sync with the `ruff` pin in pyproject.toml's `dev` extra
+        run: pip install "ruff>=0.16,<0.17"
+
+      - name: Run Ruff
+        run: ruff check src/ tests/ examples/ scripts/
+
+  test:
+    # dissmodel + every optional geospatial extra that does not depend on
+    # repositories still under construction (brmangue-dissmodel is left out
+    # on purpose). Starts at 3.11 because the `zarr` extra needs
+    # zarr-python 3, which requires Python >= 3.11 (same floor as disscube).
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Núcleo puro: sem dissmodel nem nenhum extra geoespacial.
-          # Garante que engine.py, disk/workspace.py, disk/convergence.py
-          # continuam com zero dependências em runtime.
-          - name: "core (sem extras)"
-            extras: "dev"
-          # dissmodel + todos os extras geoespaciais opcionais que não
-          # dependem de repositórios externos ainda em construção
-          # (brmangue-dissmodel fica de fora de propósito).
-          - name: "full (dissmodel + geo extras)"
-            extras: "dev,dissmodel,geotiff,zarr,zarr-test,geomosaic,dissmodel-ca"
+        python-version: ["3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,dissmodel,geotiff,zarr,zarr-test,geomosaic,dissmodel-ca]"
+
+      # Coverage XML is produced but not uploaded anywhere yet.
+      - name: Run tests with coverage
+        run: pytest tests/ --cov=haloexec --cov-report=term-missing --cov-report=xml
+
+  test-minimal:
+    # Core install without optional extras: guarantees engine.py,
+    # disk/workspace.py and disk/convergence.py keep zero runtime
+    # dependencies beyond numpy, and that tests needing optional packages
+    # are skipped, not failed. Runs on 3.10, the lowest version the core
+    # supports (requires-python), which the full job cannot cover.
+    name: test (core install, no extras, py3.10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: pytest tests/ -rs
+
+  docs:
+    # 1) builds the mkdocs site in strict mode (broken links/anchors fail);
+    # 2) extracts every ```python block from docs/ and runs it, to catch
+    #    broken quickstarts (import errors, wrong mixin/inheritance order,
+    #    renamed APIs).
+    name: docs (strict build + code blocks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
-      - name: Install package (${{ matrix.name }})
-        run: pip install -e ".[${{ matrix.extras }}]"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,docs,dissmodel,geotiff,zarr,zarr-test,geomosaic,dissmodel-ca]"
 
-      - name: Run test suite
-        run: pytest -v
+      - name: Build site (strict)
+        run: mkdocs build --strict
 
-      - name: Extract and smoke-test Python blocks from docs/
-        if: matrix.name == 'full (dissmodel + geo extras)'
+      - name: Run Python blocks from docs/
         run: |
           python - <<'EOF'
           import re, subprocess, sys, pathlib
 
           docs = pathlib.Path("docs").glob("*.md")
           failures = []
-          # Palavras que indicam um bloco ilustrativo (referencia dado
-          # externo que não existe neste repo, ou escala grande demais
-          # pra rodar em CI) -- pulamos, não são candidatos a bug de
-          # import/herança, que é o que este smoke-test mira.
+          # Markers of illustrative blocks (external data not in this repo,
+          # or a scale too large for CI) -- skipped, since they are not the
+          # import/inheritance bugs this smoke test targets.
           SKIP_MARKERS = ("50_000", "study_area.tif", "tile_001.zarr", "/tmp/my_large_workspace")
 
           for doc in docs:
@@ -60,7 +130,7 @@ jobs:
                       continue
                   if "import" not in block:
                       continue
-                  print(f"--- {doc.name} bloco {i} ---")
+                  print(f"--- {doc.name} block {i} ---")
                   result = subprocess.run(
                       [sys.executable, "-c", block],
                       capture_output=True, text=True, timeout=120,
@@ -70,9 +140,9 @@ jobs:
                       print(result.stderr)
 
           if failures:
-              print(f"\n{len(failures)} bloco(s) de código quebrado(s) em docs/:")
+              print(f"\n{len(failures)} broken code block(s) in docs/:")
               for name, i, err in failures:
-                  print(f"  - {name} bloco {i}")
+                  print(f"  - {name} block {i}")
               sys.exit(1)
-          print("Todos os blocos de código testáveis em docs/ rodaram sem erro.")
+          print("All testable code blocks in docs/ ran without error.")
           EOF

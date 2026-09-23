@@ -3,6 +3,7 @@ Testes para WorkspaceRasterBackend e CheckpointRasterMap.
 """
 
 from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -11,6 +12,7 @@ from haloexec import MemmapRasterWorkspace, WorkspaceRasterBackend
 pytest.importorskip("dissmodel")
 from dissmodel.core import Environment
 from dissmodel_ca.models.game_of_life_raster import GameOfLife
+
 from haloexec import DiskChunkedRasterCellularAutomaton
 from haloexec.visualization import CheckpointRasterMap
 
@@ -96,8 +98,9 @@ def test_checkpoint_raster_map_filtering(tmp_path: Path, monkeypatch):
 
 
 def test_save_workspace_to_geotiff_roundtrip(tmp_path: Path):
-    from haloexec import save_workspace_to_geotiff, load_geotiff_into_workspace
     import rasterio
+
+    from haloexec import save_workspace_to_geotiff
 
     shape = (60, 80)
     ws1 = MemmapRasterWorkspace.create(

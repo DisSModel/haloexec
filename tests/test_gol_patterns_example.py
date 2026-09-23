@@ -27,9 +27,9 @@ pytest.importorskip("dissmodel_ca")
 from dissmodel.core import Environment
 from dissmodel.geo import raster_grid
 from dissmodel.geo.raster.cellular_automaton import RasterCellularAutomaton
+from dissmodel_ca.models.game_of_life import PATTERNS
 
 from haloexec import HaloChunkedRasterCellularAutomaton
-from dissmodel_ca.models.game_of_life import PATTERNS
 
 ROWS, COLS = 40, 40
 GENERATIONS = 16

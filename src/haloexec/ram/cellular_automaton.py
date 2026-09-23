@@ -37,7 +37,6 @@ Fundamentação teórica: Kjolstad & Snir (2010), Ghost Cell Pattern
 from __future__ import annotations
 
 import numpy as np
-
 from dissmodel.geo.raster.backend import RasterBackend
 from dissmodel.geo.raster.cellular_automaton import RasterCellularAutomaton
 

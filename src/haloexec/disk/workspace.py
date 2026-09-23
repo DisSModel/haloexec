@@ -150,7 +150,7 @@ class MemmapRasterWorkspace:
         block_h: int,
         block_w: int,
         halo: int = 1,
-    ) -> "MemmapRasterWorkspace":
+    ) -> MemmapRasterWorkspace:
         """Cria um workspace novo, com os dois slots do double-buffer.
 
         Os arquivos `.dat` nascem ESPARSOS: só as regiões efetivamente
@@ -314,7 +314,7 @@ class MemmapRasterWorkspace:
             for mm in slot.values():
                 mm.flush()
 
-    def as_backend(self, stride: int = 1, nodata_value: float | int | None = None):
+    def as_backend(self, stride: int = 1, nodata_value: float | None = None):
         """Devolve um adaptador WorkspaceRasterBackend para uso com RasterMap/dissmodel."""
         from .backend import WorkspaceRasterBackend
         return WorkspaceRasterBackend(self, stride=stride, nodata_value=nodata_value)

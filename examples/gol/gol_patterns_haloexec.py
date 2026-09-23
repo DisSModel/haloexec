@@ -22,13 +22,12 @@ Sem display interativo, os PNGs caem em ./raster_map_frames/.
 from __future__ import annotations
 
 import numpy as np
-
 from dissmodel.core import Environment
 from dissmodel.geo import raster_grid
 from dissmodel.visualization.raster_map import RasterMap
+from dissmodel_ca.models.game_of_life import PATTERNS
 
 from haloexec import HaloChunkedRasterCellularAutomaton
-from dissmodel_ca.models.game_of_life import PATTERNS
 
 
 # ---------------------------------------------------------------------------

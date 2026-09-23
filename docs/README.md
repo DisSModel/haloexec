@@ -113,7 +113,7 @@ env.run()
 
 ### 2. Out-of-Core Disk-Backed Simulation
 
-When the domain exceeds physical memory, initialize a [`MemmapRasterWorkspace`](../src/haloexec/disk/workspace.py#L81) and run out-of-core:
+When the domain exceeds physical memory, initialize a [`MemmapRasterWorkspace`](https://github.com/DisSModel/haloexec/blob/main/src/haloexec/disk/workspace.py#L81) and run out-of-core:
 
 ```python
 from pathlib import Path

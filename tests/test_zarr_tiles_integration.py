@@ -23,7 +23,7 @@ import pytest
 
 zarr = pytest.importorskip("zarr")
 
-from haloexec import (  # noqa: E402
+from haloexec import (
     Block,
     MemmapRasterWorkspace,
     load_zarr_tiles_into_workspace,
@@ -238,7 +238,7 @@ def test_tile_outside_workspace_raises(tmp_path):
 def test_layout_shape_matches_disscube(tmp_path):
     """Fixa que as chaves que este loader exige são as que o
     CubeClient.tile_layout() produz. Sem o disscube instalado, pula."""
-    disscube = pytest.importorskip("disscube")
+    pytest.importorskip("disscube")
     from disscube.client import CubeClient
     from disscube.models import DerivedVariable, GridSpec, SpatialSource
 
