@@ -23,12 +23,11 @@ __all__ = [
     "sweep_until_convergence",
 ]
 
-# Os adaptadores dissmodel (HaloChunkedRasterCellularAutomaton,
-# HaloChunkedSyncRasterModel, DiskChunkedSyncRasterModel) são opcionais
-# -- os módulos acima funcionam sem dissmodel instalado. Só ficam
-# disponíveis se o extra "dissmodel" estiver instalado
-# (pip install "haloexec[dissmodel]"). Mesmo padrão usado em
-# pymangue/__init__.py para CMMAModel.
+# The dissmodel adapters (HaloChunkedRasterCellularAutomaton,
+# HaloChunkedSyncRasterModel, DiskChunkedSyncRasterModel,
+# DiskChunkedRasterCellularAutomaton) are optional -- the modules above
+# work without dissmodel installed. They are only available when the
+# "dissmodel" extra is installed (pip install "haloexec[dissmodel]").
 try:
     from .disk.cellular_automaton import DiskChunkedRasterCellularAutomaton
     from .disk.sync_model import DiskChunkedSyncRasterModel, workspace_arrays_for_sync_model

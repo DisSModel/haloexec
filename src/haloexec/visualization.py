@@ -1,8 +1,9 @@
 """
-Componentes de visualização e checkpoints para haloexec e dissmodel.
+Visualization and checkpoint components for haloexec and dissmodel.
 
-Fornece CheckpointRasterMap para desenhar e salvar quadros (PNG) em passos
-ou anos específicos da simulação (evitando overhead em passos intermediários).
+Provides CheckpointRasterMap, which draws and saves frames (PNG) only at
+chosen simulation steps or years (avoiding the overhead on intermediate
+steps).
 """
 
 from __future__ import annotations
@@ -20,20 +21,20 @@ except ImportError:
 if HAS_RASTERMAP:
     class CheckpointRasterMap(RasterMap):
         """
-        Extensão do RasterMap que permite filtrar quais passos ou anos da simulação
-        serão desenhados e exportados para PNG.
+        RasterMap extension that filters which simulation steps or years are
+        drawn and exported to PNG.
 
-        Evita o processamento gráfico do matplotlib e a leitura de páginas de memmap
-        em passos intermediários, permitindo simulações de longa duração em grandes grades.
+        Skips matplotlib rendering and memmap page reads on intermediate steps,
+        making long simulations on large grids practical.
 
-        Parâmetros
+        Parameters
         ----------
         save_steps : Iterable[int] | None
-            Lista ou conjunto de passos (ex.: [1, 5, 10, 20]) nos quais o quadro deve
-            ser renderizado e salvo. Se None, comporta-se como o RasterMap padrão
-            (obedecendo ao parâmetro `step` da classe base Model).
+            List or set of steps (e.g. [1, 5, 10, 20]) at which the frame is
+            rendered and saved. If None, behaves like the standard RasterMap
+            (following the `step` parameter of the base Model class).
         **kwargs
-            Todos os demais argumentos são repassados ao RasterMap (backend, band,
+            All other arguments are passed on to RasterMap (backend, band,
             color_map, cmap, save_frames, etc.).
         """
 
@@ -54,6 +55,6 @@ else:
     class CheckpointRasterMap:  # type: ignore[no-redef]
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             raise ImportError(
-                "RasterMap requer dissmodel instalado com extra viz: "
+                "RasterMap requires dissmodel installed with the viz extra: "
                 "pip install 'dissmodel[viz]'"
             )

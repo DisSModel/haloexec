@@ -1,25 +1,21 @@
 """
-Carrega um GeoTIFF diretamente para um MemmapRasterWorkspace, bloco a
-bloco, via rasterio.windows.Window — nunca materializa uma banda
-inteira em RAM.
+Load a GeoTIFF directly into a MemmapRasterWorkspace, block by block,
+through rasterio.windows.Window — a whole band is never materialized in
+RAM.
 
-Extraído e generalizado do mesmo padrão usado em um protótipo de aluno
-(chunked_engine.py, br_mangue_preprocess), que já lia rasters reais
-bloco a bloco com `rasterio.open(...).read(banda, window=Window(...))`.
-Aqui a extração usa a convenção `band_spec` já estabelecida em
-`dissmodel.io.raster.load_geotiff` — lista de (nome, dtype, nodata) —
-em vez de nomes de banda hardcoded ("papel", "elevação"), então serve
-tanto para o TIFF_BANDS do BR-MANGUE quanto para qualquer outro layout.
+Bands are described with the `band_spec` convention already used by
+`dissmodel.io.raster.load_geotiff` — a list of (name, dtype, nodata) —
+instead of hard-coded band names, so any band layout works.
 
-Por que não usar dissmodel.io.raster.load_geotiff diretamente
------------------------------------------------------------------
-Essa função (real, do pacote dissmodel) lê cada banda inteira de uma
-vez (`ds.read(i)`) para dentro de um RasterBackend em RAM — correta
-para o caminho HaloChunkedSyncRasterModel (que já materializa a grade
-global de qualquer forma), mas inadequada para MemmapRasterWorkspace,
-cujo propósito é justamente nunca materializar a grade inteira.
+Why not use dissmodel.io.raster.load_geotiff directly
+-----------------------------------------------------
+That function (from the dissmodel package) reads each whole band at
+once (`ds.read(i)`) into an in-RAM RasterBackend — right for the
+HaloChunkedSyncRasterModel path (which materializes the global grid
+anyway), but unsuitable for MemmapRasterWorkspace, whose whole purpose
+is never to materialize the entire grid.
 
-Requer rasterio (extra opcional "geotiff": pip install -e ".[geotiff]").
+Requires rasterio (optional "geotiff" extra: pip install -e ".[geotiff]").
 """
 
 from __future__ import annotations
@@ -45,29 +41,28 @@ def load_geotiff_into_workspace(
     band_spec: list[tuple[str, str, float]],
 ) -> None:
     """
-    Popula um MemmapRasterWorkspace bloco a bloco a partir de um único
-    GeoTIFF. Atalho de conveniência sobre load_geotiffs_into_workspace
-    (múltiplos arquivos) para o caso comum de um arquivo só.
+    Fill a MemmapRasterWorkspace block by block from a single GeoTIFF.
+    Convenience shortcut over load_geotiffs_into_workspace (several
+    files) for the common one-file case.
 
     Parameters
     ----------
     workspace : MemmapRasterWorkspace
-        Já criado com o mesmo shape do GeoTIFF (workspace.shape deve
-        bater com (altura, largura) do arquivo) e com os arrays de
-        `band_spec` já declarados em `arrays=` no `.create()`.
+        Already created with the GeoTIFF's shape (workspace.shape must
+        match the file's (height, width)) and with the `band_spec` arrays
+        declared in `arrays=` of `.create()`.
     path : str | Path
-        Caminho do GeoTIFF local.
-    band_spec : list[(nome, dtype, nodata)]
-        Mesmo formato de dissmodel.io.raster.load_geotiff — banda 1
-        do arquivo mapeia para band_spec[0], banda 2 para band_spec[1],
-        etc. Arrays cujo nome não foi declarado no workspace são
-        ignorados (permite carregar só um subconjunto das bandas).
+        Path of the local GeoTIFF.
+    band_spec : list[(name, dtype, nodata)]
+        Same format as dissmodel.io.raster.load_geotiff — file band 1
+        maps to band_spec[0], band 2 to band_spec[1], and so on. Arrays
+        whose name is not declared in the workspace are skipped (so a
+        subset of the bands can be loaded).
 
-    Nota sobre nodata: este loader NÃO filtra nem substitui valores de
-    nodata — copia os valores brutos do arquivo. Use o `nodata` de
-    cada entrada de band_spec para configurar o `boundary_value`
-    correspondente nas camadas de halo (ver achado documentado no
-    README sobre boundary_value por-array).
+    Note on nodata: this loader does NOT filter or replace nodata
+    values — it copies the file's raw values. Use each band_spec entry's
+    `nodata` to set the matching `boundary_value` for the halo layers
+    (see the README finding on per-array boundary_value).
     """
     load_geotiffs_into_workspace(workspace, [(path, band_spec)])
 
@@ -77,38 +72,36 @@ def load_geotiffs_into_workspace(
     sources: list[tuple[str | Path, list[tuple[str, str, float]]]],
 ) -> None:
     """
-    Popula um MemmapRasterWorkspace bloco a bloco a partir de
-    MÚLTIPLOS arquivos GeoTIFF, lendo a MESMA janela de bloco de cada
-    arquivo por vez.
+    Fill a MemmapRasterWorkspace block by block from SEVERAL GeoTIFF
+    files, reading the SAME block window from each file at a time.
 
-    Generaliza load_geotiff_into_workspace (um único arquivo) para o
-    padrão de múltiplos rasters usado em um protótipo de aluno
-    (chunked_engine.py: `dominio_path` + `base_path` lidos juntos,
-    validando shape/CRS consistentes antes de processar). O motor de
-    blocos+halo (Block/make_blocks/halo_window) sempre foi agnóstico a
-    quantos arquivos alimentam a grade — um bloco é só uma posição
-    (r0:r1, c0:c1); esta função é o que estava faltando para o
-    carregador acompanhar essa generalidade.
+    Generalizes load_geotiff_into_workspace (a single file) to inputs
+    split across several rasters that share one grid (e.g. a domain mask
+    and a base layer read together, with consistent shape/CRS checked
+    before processing). The block+halo engine (Block/make_blocks/
+    halo_window) has always been agnostic to how many files feed the
+    grid — a block is just a position (r0:r1, c0:c1); this function lets
+    the loader match that generality.
 
     Parameters
     ----------
     workspace : MemmapRasterWorkspace
-        Já criado com shape batendo com TODOS os arquivos de entrada.
-    sources : list[(caminho, band_spec)]
-        Cada arquivo contribui com os arrays declarados em seu próprio
-        band_spec (mesmo formato de load_geotiff_into_workspace). Um
-        array pode vir de qualquer um dos arquivos — não precisa haver
-        sobreposição de nomes entre band_specs de arquivos diferentes.
+        Already created with a shape matching ALL input files.
+    sources : list[(path, band_spec)]
+        Each file contributes the arrays declared in its own band_spec
+        (same format as load_geotiff_into_workspace). An array may come
+        from any of the files — band_specs of different files do not
+        need overlapping names.
 
     Raises
     ------
     ValueError
-        Se os arquivos não tiverem o mesmo shape entre si, ou não
-        baterem com o shape do workspace, ou tiverem CRS diferentes
-        entre si (quando CRS está definido em mais de um arquivo).
+        If the files do not share the same shape, do not match the
+        workspace shape, or have different CRSs (when a CRS is defined in
+        more than one file).
     """
     if not HAS_RASTERIO:
-        raise ImportError("rasterio é necessário — pip install -e '.[geotiff]'")
+        raise ImportError("rasterio is required — pip install -e '.[geotiff]'")
 
     declared = set(workspace.metadata["arrays"])
     datasets = [rasterio.open(str(path)) for path, _ in sources]
@@ -120,19 +113,19 @@ def load_geotiffs_into_workspace(
             shape = (ds.height, ds.width)
             if shape != ref_shape:
                 raise ValueError(
-                    f"Shape inconsistente entre arquivos: {path} tem {shape}, "
-                    f"esperado {ref_shape} (do primeiro arquivo da lista)."
+                    f"Inconsistent shape between files: {path} has {shape}, "
+                    f"expected {ref_shape} (from the first file in the list)."
                 )
             if ds.crs is not None and ref_crs is not None and ds.crs != ref_crs:
                 raise ValueError(
-                    f"CRS inconsistente entre arquivos: {path} tem {ds.crs}, "
-                    f"esperado {ref_crs} (do primeiro arquivo da lista)."
+                    f"Inconsistent CRS between files: {path} has {ds.crs}, "
+                    f"expected {ref_crs} (from the first file in the list)."
                 )
 
         if ref_shape != tuple(workspace.shape):
             raise ValueError(
-                f"Shape dos GeoTIFFs {ref_shape} não bate com o shape "
-                f"do workspace {tuple(workspace.shape)}."
+                f"Shape of the GeoTIFFs {ref_shape} does not match the "
+                f"workspace shape {tuple(workspace.shape)}."
             )
 
         for block in workspace.blocks():
@@ -159,38 +152,41 @@ def save_workspace_to_geotiff(
     compress: str = "lzw",
 ) -> None:
     """
-    Grava arrays do MemmapRasterWorkspace em um GeoTIFF em janelas
-    (bloco a bloco), sem nunca materializar a grade inteira em RAM.
+    Write MemmapRasterWorkspace arrays to a GeoTIFF in windows (block
+    by block), never materializing the whole grid in RAM.
 
     Parameters
     ----------
     workspace : MemmapRasterWorkspace
-        Workspace de onde ler os dados do slot de leitura atual.
+        Workspace whose current read slot is written.
     path : str | Path
-        Caminho do arquivo GeoTIFF de saída.
-    bands : list[str] ou list[(nome, dtype, nodata)]
-        Nomes dos arrays a gravar como bandas (1, 2, ...).
+        Path of the output GeoTIFF.
+    bands : list[str] or list[(name, dtype, nodata)]
+        Names of the arrays to write as bands (1, 2, ...).
     transform : Affine, optional
-        Matriz de geotransformação do rasterio. Se None, cria uma padrão.
-    crs : CRS ou str, default="EPSG:31984"
-        Sistema de referência de coordenadas.
+        rasterio geotransform. If None, a default one is used (with a
+        warning).
+    crs : CRS or str, default="EPSG:31984"
+        Coordinate reference system.
     compress : str, default="lzw"
-        Compressão do GeoTIFF.
+        GeoTIFF compression.
+
     Note
     ----
-    GeoTIFF/GDAL exige um único dtype e um único nodata para TODAS as
-    bandas de um arquivo (limitação do formato, não deste código —
-    testado empiricamente: GDAL colapsa nodata por banda para um valor
-    só, mesmo passando valores distintos). Se `bands` misturar dtypes
-    ou nodata diferentes, esta função converte tudo para o dtype comum
-    (menor tipo que comporta todos, via `np.result_type`) e usa o
-    nodata da PRIMEIRA banda para o arquivo inteiro — e emite um aviso
-    (`warnings.warn`) sempre que isso descartar informação, em vez de
-    fazer silenciosamente. Se cada array precisa manter seu próprio
-    dtype/nodata, grave um GeoTIFF por array em vez de multibanda.
+    GeoTIFF/GDAL requires a single dtype and a single nodata for ALL
+    bands of a file (a limitation of the format, not of this code —
+    tested empirically: GDAL collapses per-band nodata to one value,
+    even when distinct values are passed). If `bands` mixes dtypes or
+    nodata values, this function converts everything to the common dtype
+    (the smallest type that holds them all, via `np.result_type`) and
+    uses the FIRST band's nodata for the whole file — and emits a
+    warning (`warnings.warn`) whenever that discards information, rather
+    than doing it silently. If each array must keep its own
+    dtype/nodata, write one GeoTIFF per array instead of a multi-band
+    file.
     """
     if not HAS_RASTERIO:
-        raise ImportError("rasterio é necessário — pip install -e '.[geotiff]'")
+        raise ImportError("rasterio is required — pip install -e '.[geotiff]'")
 
     import warnings
 
@@ -212,11 +208,11 @@ def save_workspace_to_geotiff(
     if transform is None:
         transform = from_origin(500_000.0, 9_700_000.0, 30.0, 30.0)
         warnings.warn(
-            "save_workspace_to_geotiff: nenhum `transform` foi passado — "
-            "usando origem padrão arbitrária (500000, 9700000, 30x30m). "
-            "O GeoTIFF resultante NÃO estará georreferenciado corretamente "
-            "a menos que essa origem coincida com o domínio real. Passe "
-            "`transform=` explicitamente para dados reais.",
+            "save_workspace_to_geotiff: no `transform` was given — "
+            "using an arbitrary default origin (500000, 9700000, 30x30 m). "
+            "The resulting GeoTIFF will NOT be correctly georeferenced "
+            "unless that origin matches the real domain. Pass "
+            "`transform=` explicitly for real data.",
             stacklevel=2,
         )
 
@@ -224,12 +220,12 @@ def save_workspace_to_geotiff(
     common_dtype = np.result_type(*(np.dtype(d) for d in distinct_dtypes))
     if len(distinct_dtypes) > 1:
         warnings.warn(
-            f"save_workspace_to_geotiff: bandas com dtypes distintos "
-            f"{sorted(distinct_dtypes)} — GeoTIFF exige um único dtype por "
-            f"arquivo, convertendo tudo para {common_dtype} (pode aumentar "
-            f"o tamanho do arquivo e/ou alterar a semântica de arrays "
-            f"categóricos). Para preservar dtypes, grave um GeoTIFF "
-            f"separado por array.",
+            f"save_workspace_to_geotiff: bands with different dtypes "
+            f"{sorted(distinct_dtypes)} — GeoTIFF requires a single dtype per "
+            f"file, converting everything to {common_dtype} (may increase "
+            f"the file size and/or change the meaning of categorical "
+            f"arrays). To keep the dtypes, write a separate GeoTIFF "
+            f"per array.",
             stacklevel=2,
         )
 
@@ -237,12 +233,12 @@ def save_workspace_to_geotiff(
     first_nodata = parsed_bands[0][2]
     if len(distinct_nodatas) > 1:
         warnings.warn(
-            f"save_workspace_to_geotiff: bandas com nodata distintos "
-            f"{sorted(distinct_nodatas)} — GeoTIFF só suporta um nodata "
-            f"por arquivo (limitação do GDAL, testado empiricamente: "
-            f"valores por banda são silenciosamente colapsados). Usando "
-            f"nodata da primeira banda ({first_nodata!r}) para o arquivo "
-            f"inteiro; as demais bandas ficam sem nodata correto.",
+            f"save_workspace_to_geotiff: bands with different nodata values "
+            f"{sorted(distinct_nodatas)} — GeoTIFF supports only one nodata "
+            f"per file (a GDAL limitation, tested empirically: per-band "
+            f"values are silently collapsed). Using the first band's "
+            f"nodata ({first_nodata!r}) for the whole file; the other "
+            f"bands will not have the correct nodata.",
             stacklevel=2,
         )
 

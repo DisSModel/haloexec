@@ -1,20 +1,20 @@
 """
-Integração com dissmodel: DiskChunkedRasterCellularAutomaton.
+dissmodel integration: DiskChunkedRasterCellularAutomaton.
 
-Equivalente em disco de ram/cellular_automaton.py::HaloChunkedRasterCellularAutomaton
-— mesmo contrato de rule() (`rule(arrays) -> dict`), mas lendo/escrevendo
-via MemmapRasterWorkspace em vez de materializar a grade inteira em RAM.
+Disk counterpart of ram/cellular_automaton.py::HaloChunkedRasterCellularAutomaton
+— same rule() contract (`rule(arrays) -> dict`), but reading/writing
+through MemmapRasterWorkspace instead of materializing the whole grid
+in RAM.
 
-Preenche uma lacuna real: existia adaptador de disco pra modelos
-SyncRasterModel (disk/sync_model.py::DiskChunkedSyncRasterModel), mas
-não para modelos RasterCellularAutomaton — qualquer AC escrito com
-rule() (como dissmodel_ca.models.game_of_life_raster.GameOfLife) só
-rodava em RAM até este módulo existir.
+Complements disk/sync_model.py::DiskChunkedSyncRasterModel (the disk
+adapter for SyncRasterModel models) for RasterCellularAutomaton models:
+any CA written with rule() (such as
+dissmodel_ca.models.game_of_life_raster.GameOfLife) can run from disk.
 
-Uso: `class GameOfLifeHalo(DiskChunkedRasterCellularAutomaton, GameOfLife): pass`
-reusa o rule() real da classe original sem reescrever nada — mesmo
-princípio de composição cooperativa (MRO) já usado em
-disk/sync_model.py com FloodModel/MangroveModel.
+Usage: `class GameOfLifeHalo(DiskChunkedRasterCellularAutomaton, GameOfLife): pass`
+reuses the original class's real rule() without rewriting anything —
+the same cooperative-composition (MRO) principle used in
+disk/sync_model.py with FloodModel/MangroveModel.
 """
 
 from __future__ import annotations
@@ -26,11 +26,11 @@ from .workspace import MemmapRasterWorkspace
 
 class DiskChunkedRasterCellularAutomaton:
     """
-    Mixin que processa rule() de um RasterCellularAutomaton em blocos
-    lidos de um MemmapRasterWorkspace, sem nunca materializar a grade
-    inteira em RAM.
+    Mixin that runs a RasterCellularAutomaton's rule() in blocks read
+    from a MemmapRasterWorkspace, never materializing the whole grid in
+    RAM.
 
-    Ordem de herança (MRO): este mixin deve vir primeiro, ex.:
+    Inheritance order (MRO): this mixin must come first, e.g.
     `class GameOfLifeHalo(DiskChunkedRasterCellularAutomaton, GameOfLife)`.
     """
 
@@ -46,10 +46,10 @@ class DiskChunkedRasterCellularAutomaton:
         self.halo = workspace.halo if halo is None else halo
         self.boundary_value = boundary_value
 
-        # Placeholder leve: RasterBackend(shape=...) não aloca arrays,
-        # só existe para satisfazer o contrato de RasterModel.setup()
-        # (self.backend = backend; self.shape = backend.shape). O
-        # backend real por bloco é criado dentro de execute().
+        # Lightweight placeholder: RasterBackend(shape=...) allocates no
+        # arrays; it only satisfies RasterModel.setup()'s contract
+        # (self.backend = backend; self.shape = backend.shape). The real
+        # per-block backend is created inside execute().
         placeholder = RasterBackend(shape=workspace.shape)
         super().setup(backend=placeholder, state_attr=state_attr, **kwargs)
 
@@ -68,7 +68,7 @@ class DiskChunkedRasterCellularAutomaton:
             self.backend = block_backend
             self.shape = block_backend.shape
             try:
-                updates = self.rule(block_backend.snapshot())  # mesmo contrato de sempre
+                updates = self.rule(block_backend.snapshot())  # the usual contract
             finally:
                 self.backend = real_backend
                 self.shape = real_shape

@@ -1,12 +1,12 @@
 """
-Teste de integração haloexec <-> geomosaic (pacotes separados, sem
-dependência de runtime entre si).
+haloexec <-> geomosaic integration test (separate packages, no runtime
+dependency between them).
 
-Prova que load_geotiff_into_workspace (haloexec) lê corretamente,
-bloco a bloco, um mosaico produzido pelo geomosaic — inclusive para
-blocos que cruzam a fronteira entre tiles. geomosaic é usado aqui só
-como dependência de TESTE (extra "geomosaic"), nunca importado pelo
-código de runtime do haloexec.
+Proves that load_geotiff_into_workspace (haloexec) correctly reads, block
+by block, a mosaic produced by geomosaic — including blocks that cross
+the boundary between tiles. geomosaic is used here only as a TEST
+dependency (the "geomosaic" extra), never imported by haloexec's runtime
+code.
 """
 
 import numpy as np
@@ -48,8 +48,8 @@ def test_haloexec_reads_geomosaic_vrt_across_tile_boundary(tmp_path):
     contract = geomosaic.build_mosaic_contract(paths)
     vrt_path = geomosaic.write_vrt(contract, tmp_path / "mosaico.vrt")
 
-    # blocos de 6x6 cruzam a fronteira do mosaico (coluna/linha 10)
-    # várias vezes -- nenhum código especial de mosaico no haloexec.
+    # 6x6 blocks cross the mosaic boundary (column/row 10) several
+    # times -- no mosaic-specific code in haloexec.
     ws = MemmapRasterWorkspace.create(
         root=tmp_path / "workspace", shape=(20, 20),
         arrays={"estado": np.int16}, block_h=6, block_w=6, halo=1,

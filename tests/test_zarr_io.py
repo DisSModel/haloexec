@@ -1,7 +1,7 @@
 """
-Testes de zarr_io.py: carregamento de Zarr (grupo multi-variável,
-array único, e com dimensão temporal — padrão disscube) direto para
-MemmapRasterWorkspace, bloco a bloco.
+Tests for disk/io/zarr.py: loading Zarr (multi-variable group, single
+array, and with a time dimension — the disscube layout) straight into a
+MemmapRasterWorkspace, block by block.
 """
 
 import numpy as np
@@ -13,13 +13,13 @@ from haloexec import MemmapRasterWorkspace, load_zarr_into_workspace
 
 
 def test_load_zarr_group_multi_variable(tmp_path):
-    """Simula o layout do disscube: um grupo com várias variáveis
-    (ex.: 'uso', 'alt'), cada uma acessada por nome."""
+    """Mimic the disscube layout: a group with several variables
+    (e.g. 'uso', 'alt'), each accessed by name."""
     rng = np.random.default_rng(1)
     uso = rng.integers(1, 9, size=(20, 20)).astype("int16")
     alt = rng.uniform(-2.0, 8.0, size=(20, 20)).astype("float32")
 
-    store_path = str(tmp_path / "grupo.zarr")
+    store_path = str(tmp_path / "group.zarr")
     root = zarr.open_group(store_path, mode="w")
     root.create_array("uso", shape=(20, 20), dtype="int16")
     root["uso"][:] = uso
@@ -37,52 +37,52 @@ def test_load_zarr_group_multi_variable(tmp_path):
 
 
 def test_load_zarr_group_with_variable_map(tmp_path):
-    """Nome do array no workspace difere do nome da variável no zarr."""
+    """The workspace array name differs from the variable name in the store."""
     rng = np.random.default_rng(2)
-    dado = rng.integers(0, 100, size=(15, 15)).astype("int32")
+    data = rng.integers(0, 100, size=(15, 15)).astype("int32")
 
-    store_path = str(tmp_path / "grupo.zarr")
+    store_path = str(tmp_path / "group.zarr")
     root = zarr.open_group(store_path, mode="w")
-    root.create_array("dist_sedes", shape=(15, 15), dtype="int32")
-    root["dist_sedes"][:] = dado
+    root.create_array("dist_to_towns", shape=(15, 15), dtype="int32")
+    root["dist_to_towns"][:] = data
 
     ws = MemmapRasterWorkspace.create(
         root=tmp_path / "workspace", shape=(15, 15),
-        arrays={"distancia": np.int32}, block_h=5, block_w=5, halo=1,
+        arrays={"distance": np.int32}, block_h=5, block_w=5, halo=1,
     )
-    load_zarr_into_workspace(ws, store_path, variable_map={"distancia": "dist_sedes"})
+    load_zarr_into_workspace(ws, store_path, variable_map={"distance": "dist_to_towns"})
 
-    assert np.array_equal(ws.snapshot("distancia"), dado)
+    assert np.array_equal(ws.snapshot("distance"), data)
 
 
 def test_load_zarr_single_array(tmp_path):
-    """Store é um único array (sem grupo)."""
+    """The store is a single array (no group)."""
     rng = np.random.default_rng(3)
-    dado = rng.integers(0, 10, size=(12, 12)).astype("uint8")
+    data = rng.integers(0, 10, size=(12, 12)).astype("uint8")
 
-    store_path = str(tmp_path / "unico.zarr")
+    store_path = str(tmp_path / "single.zarr")
     za = zarr.open_array(store_path, mode="w", shape=(12, 12), dtype="uint8")
-    za[:] = dado
+    za[:] = data
 
     ws = MemmapRasterWorkspace.create(
         root=tmp_path / "workspace", shape=(12, 12),
-        arrays={"estado": np.uint8}, block_h=4, block_w=4, halo=1,
+        arrays={"state": np.uint8}, block_h=4, block_w=4, halo=1,
     )
-    load_zarr_into_workspace(ws, store_path, variable_map={"estado": None})
+    load_zarr_into_workspace(ws, store_path, variable_map={"state": None})
 
-    assert np.array_equal(ws.snapshot("estado"), dado)
+    assert np.array_equal(ws.snapshot("state"), data)
 
 
 def test_load_zarr_temporal_variable(tmp_path):
-    """Variável 3D (time, y, x) — padrão do 'Temporal Backend' do
-    disscube para produtos derivados com janela de validade."""
+    """3-D variable (time, y, x) — the layout of disscube's 'Temporal
+    Backend' for derived products with a validity window."""
     rng = np.random.default_rng(4)
-    serie = rng.integers(0, 5, size=(3, 10, 10)).astype("int16")  # 3 anos
+    series = rng.integers(0, 5, size=(3, 10, 10)).astype("int16")  # 3 years
 
     store_path = str(tmp_path / "temporal.zarr")
     root = zarr.open_group(store_path, mode="w")
     root.create_array("mangue", shape=(3, 10, 10), dtype="int16")
-    root["mangue"][:] = serie
+    root["mangue"][:] = series
 
     ws = MemmapRasterWorkspace.create(
         root=tmp_path / "workspace", shape=(10, 10),
@@ -90,7 +90,7 @@ def test_load_zarr_temporal_variable(tmp_path):
     )
     load_zarr_into_workspace(ws, store_path, time_index=1)
 
-    assert np.array_equal(ws.snapshot("mangue"), serie[1])
+    assert np.array_equal(ws.snapshot("mangue"), series[1])
 
 
 def test_load_zarr_temporal_without_time_index_raises(tmp_path):
@@ -108,14 +108,14 @@ def test_load_zarr_temporal_without_time_index_raises(tmp_path):
 
 
 def test_load_zarr_shape_mismatch_raises(tmp_path):
-    store_path = str(tmp_path / "grupo.zarr")
+    store_path = str(tmp_path / "group.zarr")
     root = zarr.open_group(store_path, mode="w")
     root.create_array("uso", shape=(30, 30), dtype="int16")
     root["uso"][:] = np.zeros((30, 30), dtype="int16")
 
     ws = MemmapRasterWorkspace.create(
-        root=tmp_path / "workspace", shape=(20, 20),  # shape errado de proposito
+        root=tmp_path / "workspace", shape=(20, 20),  # wrong shape on purpose
         arrays={"uso": np.int16}, block_h=5, block_w=5, halo=1,
     )
-    with pytest.raises(ValueError, match="não bate"):
+    with pytest.raises(ValueError, match="does not match"):
         load_zarr_into_workspace(ws, store_path)

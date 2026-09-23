@@ -62,8 +62,8 @@ RasterMap(
     backend=backend,
     band="state",
     color_map={0: "#ffffff", 1: "#2f8f6e"},
-    labels={0: "morta", 1: "viva"},
-    title=f"Padrões clássicos sobre fronteiras de bloco",
+    labels={0: "dead", 1: "alive"},
+    title="Classic patterns over block boundaries",
 )
 env.run()
 
@@ -191,8 +191,8 @@ is what tends to expose it.
 
 ## Two input paths: GeoTIFF/VRT or Zarr
 
-`geotiff_io.py`/`mosaic_io.py` (TIFF/VRT, via `rasterio`) and
-`zarr_io.py` (via `zarr`) are **interchangeable** input paths — both
+`disk/io/geotiff.py` (TIFF/VRT, via `rasterio`) and
+`disk/io/zarr.py` (via `zarr`) are **interchangeable** input paths — both
 populate the same `MemmapRasterWorkspace`, block by block, without
 materializing the full array in RAM. Swap the loader; the rest of the
 pipeline (halo, disk, models) doesn't change.
@@ -250,7 +250,7 @@ never imported by `haloexec`'s runtime code).
 
 ## Loading GeoTIFF straight to disk
 
-`geotiff_io.py` (`load_geotiff_into_workspace`) loads a real GeoTIFF
+`disk/io/geotiff.py` (`load_geotiff_into_workspace`) loads a real GeoTIFF
 block by block directly into a `MemmapRasterWorkspace`, via
 `rasterio.windows.Window` — never materializing a whole band in RAM.
 It uses the `band_spec` convention already established by
@@ -281,11 +281,10 @@ routing, watershed delineation — where a cell's value can, in
 principle, depend on the entire domain, not just its immediate
 neighbors.
 
-Generalized from a domain-specific student prototype (tidal
-connectivity via `scipy.ndimage.binary_propagation`), though that
-prototype's specific rule is not part of this primitive — only the
-orchestration pattern was extracted: a small halo plus repeated global
-sweeps until no block changes, instead of one large halo. Each sweep
+The primitive holds only the orchestration pattern — the rule itself
+(e.g. tidal connectivity via `scipy.ndimage.binary_propagation`) is
+supplied by the caller: a small halo plus repeated global sweeps until
+no block changes, instead of one large halo. Each sweep
 writes its result **immediately** back (Gauss-Seidel, via
 `write_block_core_in_place` — no ping-pong), so a block processed
 later in the same sweep already sees the update from a block processed
@@ -346,16 +345,13 @@ seeds).
 
 ## Disk layer (grids larger than RAM)
 
-`disk_backend.py` (`MemmapRasterWorkspace`) and `disk_sync_model.py`
+`disk/workspace.py` (`MemmapRasterWorkspace`) and `disk/sync_model.py`
 (`DiskChunkedSyncRasterModel`) generalize the same domain decomposition
 for grids that don't fit in memory, using `np.memmap` with
 double-buffering and checkpointing. **No dependency on dissmodel** in
-`disk_backend.py` — reusable by any framework.
+`disk/workspace.py` — reusable by any framework.
 
-Extracted and generalized from a student prototype (a domain-specific
-preprocessing pipeline) that already had correct memmap+double-buffer
-+checkpoint mechanics, but tied to domain-specific state names. Here
-arrays are named generically (a `name -> dtype` dict), with no coupling
+Arrays are named generically (a `name -> dtype` dict), with no coupling
 to any particular domain's variable names.
 
 ```python
@@ -425,7 +421,7 @@ The cost is low — a typical workspace has ~1500 blocks, so the index
 is on the order of 1500 bits, versus the ~371 MB a per-cell mask would
 cost. `read_block_*` for an absent block would return the declared
 `nodata` without touching disk. The point of attention is
-`disk_sync_model.py`, which today writes every block unconditionally
+`disk/sync_model.py`, which today writes every block unconditionally
 in `write_block_core` — the change would need to decide whether a
 fully-nodata block should be written back at all.
 
@@ -438,7 +434,7 @@ evidence that the axis order stored on disk isn't guaranteed.
 Reproduced with real `xarray`, writing exactly the way disscube's
 `VariableWriter` writes (`da.to_dataset(...).to_zarr(...)`): a
 **square** array with `(x, y)` axes instead of `(y, x)` has the
-**same shape** in both cases — the shape check in `zarr_io.py` didn't
+**same shape** in both cases — the shape check in `disk/io/zarr.py` didn't
 catch the inversion. Without a fix, this corrupted row/column
 **silently**, with no error at all.
 

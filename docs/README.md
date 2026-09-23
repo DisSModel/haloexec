@@ -125,10 +125,10 @@ from haloexec import (
     DiskChunkedRasterCellularAutomaton,
 )
 
-# DiskChunkedRasterCellularAutomaton é um mixin cooperativo: precisa vir
-# primeiro no MRO, com uma classe real do dissmodel (aqui,
-# RasterCellularAutomaton) como segunda base — do contrário setup()
-# não tem para onde delegar via super() e a classe falha ao instanciar.
+# DiskChunkedRasterCellularAutomaton is a cooperative mixin: it must come
+# first in the MRO, with a real dissmodel class (here,
+# RasterCellularAutomaton) as the second base — otherwise setup() has
+# nowhere to delegate through super() and the class fails to instantiate.
 class LargeScaleGameOfLife(DiskChunkedRasterCellularAutomaton, RasterCellularAutomaton):
     def rule(self, arrays: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         state = arrays["state"]

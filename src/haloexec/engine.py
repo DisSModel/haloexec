@@ -1,16 +1,16 @@
 """
-Primitivas genéricas de Decomposição de Domínio com zonas de Halo
-(Ghost Cell Pattern) — sem dependência de dissmodel.
+Generic Domain Decomposition primitives with Halo zones (Ghost Cell
+Pattern) — no dependency on dissmodel.
 
-Fundamentação teórica: Kjolstad & Snir (2010), "Ghost Cell Pattern",
-ParaPLoP; aplicação em AC-LULC geoespacial: Xia et al. (2025), ISPRS
-IJGI 14(3):109. Ver README.md.
+Theoretical basis: Kjolstad & Snir (2010), "Ghost Cell Pattern",
+ParaPLoP; application to geospatial CA-LULC: Xia et al. (2025), ISPRS
+IJGI 14(3):109. See README.md.
 
-Este módulo contém apenas a lógica de particionamento da grade
-(Block, make_blocks). A execução em si — chamar a regra de transição
-por bloco e reconciliar o resultado — é responsabilidade de quem
-consome estas primitivas. A integração concreta com o dissmodel está
-em `dissmodel_ca.py` (HaloChunkedRasterCellularAutomaton).
+This module holds only the grid-partitioning logic (Block, make_blocks).
+The execution itself — calling the transition rule per block and
+reconciling the result — belongs to whoever consumes these primitives.
+The concrete dissmodel integration is in `ram/cellular_automaton.py`
+(HaloChunkedRasterCellularAutomaton).
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Block:
-    """Um sub-domínio retangular da grade global (sem halo)."""
+    """A rectangular sub-domain of the global grid (no halo)."""
 
     r0: int
     r1: int
@@ -33,16 +33,16 @@ class Block:
 
     @property
     def core(self) -> tuple[slice, slice]:
-        """Slices prontos pra indexar a região deste bloco num array
-        global (usado pela camada de disco, ex.: write_block_core)."""
+        """Slices ready to index this block's region in a global array
+        (used by the disk layer, e.g. write_block_core)."""
         return (slice(self.r0, self.r1), slice(self.c0, self.c1))
 
 
 def make_blocks(height: int, width: int, block_h: int, block_w: int) -> list[Block]:
-    """Decompõe uma grade (height, width) em blocos regulares de tamanho
-    (block_h, block_w). Blocos na borda direita/inferior podem ser
-    menores (resíduo), conforme decomposição de domínio regular
-    (Xia et al. 2025, Seção 2.1)."""
+    """Split a (height, width) grid into regular blocks of size
+    (block_h, block_w). Blocks on the right/bottom edge may be smaller
+    (the remainder), as in regular domain decomposition
+    (Xia et al. 2025, Section 2.1)."""
     blocks = []
     for r0 in range(0, height, block_h):
         r1 = min(r0 + block_h, height)
@@ -53,24 +53,23 @@ def make_blocks(height: int, width: int, block_h: int, block_w: int) -> list[Blo
 
 
 def resolve_boundary_value(boundary_value, name: str) -> float:
-    """Resolve o valor de preenchimento do halo externo para um array
-    específico. Aceita um escalar (mesmo valor para todos os arrays) ou
-    um dict {nome: valor}.
+    """Resolve the outer-halo fill value for one array. Accepts a
+    scalar (same value for every array) or a dict {name: value}.
 
-    Se `name` terminar em "_past" e não tiver entrada própria no dict,
-    cai automaticamente para o valor do nome base (sem "_past") — assim
-    quem configura {"solo": -1} não precisa lembrar de duplicar para
-    "solo_past" também. Sem esse fallback, "_past" cairia
-    silenciosamente no default 0, reintroduzindo o mesmo problema que
-    este mecanismo existe para evitar.
+    If `name` ends in "_past" and has no entry of its own in the dict,
+    it falls back to the base name's value (without "_past") — so
+    whoever sets {"solo": -1} does not have to remember to repeat it for
+    "solo_past". Without this fallback, "_past" would silently get the
+    default 0, bringing back the very problem this mechanism exists to
+    prevent.
 
-    Importante: 0 não é um sentinela seguro para todo domínio — em
-    BR-MANGUE, por exemplo, `solo=0` é SOLO_CANAL_FLUVIAL, um código
-    de solo VÁLIDO (não "sem dado"). Usar 0 como boundary_value para
-    esse array cria fontes de migração fantasmas na borda externa do
-    domínio, divergindo do resultado monolítico. Prefira alinhar
-    boundary_value ao nodata real de cada array (ex.: TIFF_BANDS do
-    domínio), passando um dict em vez de um escalar único.
+    Important: 0 is not a safe sentinel for every domain — in BR-MANGUE,
+    for example, `solo=0` is SOLO_CANAL_FLUVIAL, a VALID soil code (not
+    "no data"). Using 0 as boundary_value for that array creates phantom
+    migration sources at the domain's outer edge, diverging from the
+    monolithic result. Prefer aligning boundary_value with each array's
+    real nodata (e.g. the domain's TIFF_BANDS), passing a dict instead of
+    a single scalar.
     """
     if not isinstance(boundary_value, dict):
         return boundary_value
