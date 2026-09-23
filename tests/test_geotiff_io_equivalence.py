@@ -14,7 +14,6 @@ from rasterio.transform import from_origin
 
 from haloexec import MemmapRasterWorkspace, load_geotiff_into_workspace
 
-
 BAND_SPEC = [
     ("uso", "int16", 0),
     ("alt", "float32", -9999.0),

@@ -54,11 +54,18 @@ def _resolve_axis_order(arr, expected_names: tuple[str, ...]) -> tuple[int, ...]
     tem o MESMO shape nos dois casos — a checagem de shape sozinha
     não detecta a troca; é silenciosa, não trava.
 
-    Retorna None se dimension_names não estiver disponível (Zarr sem
+    No Zarr v2 (zarr-python 2.x, o único disponível em Python 3.10)
+    não existe dimension_names: o xarray grava os nomes no atributo
+    `_ARRAY_DIMENSIONS`, que é lido como fallback.
+
+    Retorna None se nenhum dos dois estiver disponível (Zarr sem
     metadado de dimensão — não há como verificar, assume-se a ordem
     como está, mesmo comportamento de antes desta correção).
     """
     dims = getattr(getattr(arr, "metadata", None), "dimension_names", None)
+    if not dims:
+        attrs = getattr(arr, "attrs", None)
+        dims = attrs.get("_ARRAY_DIMENSIONS") if attrs is not None else None
     if not dims:
         return None
     dims = tuple(dims)
@@ -184,7 +191,7 @@ def load_zarr_into_workspace(
                 # raw ainda está na ordem relativa em disco (menos o
                 # eixo de tempo, já reduzido pela indexação inteira
                 # acima) -- transpõe para (y, x) canônico.
-                def _shift(pos):
+                def _shift(pos, time_disk_axis=time_disk_axis):
                     return pos - 1 if (time_disk_axis is not None and time_disk_axis < pos) else pos
                 data = np.transpose(raw, (_shift(y_disk_axis), _shift(x_disk_axis)))
             else:

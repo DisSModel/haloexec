@@ -37,7 +37,6 @@ onde há leitura de vizinhos via self.shift.
 from __future__ import annotations
 
 import numpy as np
-
 from dissmodel.geo.raster.backend import RasterBackend
 
 from ..engine import make_blocks, resolve_boundary_value

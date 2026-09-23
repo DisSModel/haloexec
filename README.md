@@ -1,5 +1,8 @@
 # haloexec
 
+[![CI](https://github.com/DisSModel/haloexec/actions/workflows/ci.yml/badge.svg)](https://github.com/DisSModel/haloexec/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Cellular Automaton execution engine using **Domain Decomposition** with
 **Halo Zones** (Ghost Cell Pattern), integrated with real
 [dissmodel](https://pypi.org/project/dissmodel/) via a pip dependency —

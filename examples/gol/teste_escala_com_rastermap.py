@@ -15,17 +15,16 @@ from pathlib import Path
 
 import numpy as np
 import rasterio
-from rasterio.windows import Window
-from rasterio.transform import from_origin
-
 from dissmodel.core import Environment
 from dissmodel_ca.models.game_of_life_raster import GameOfLife
+from rasterio.transform import from_origin
+from rasterio.windows import Window
 
 from haloexec import (
-    MemmapRasterWorkspace,
     DiskChunkedRasterCellularAutomaton,
-    load_geotiff_into_workspace,
+    MemmapRasterWorkspace,
     WorkspaceRasterBackend,
+    load_geotiff_into_workspace,
 )
 from haloexec.visualization import CheckpointRasterMap
 
@@ -82,7 +81,7 @@ def main() -> None:
     tmp.mkdir(parents=True, exist_ok=True)
     tif_path = tmp / "estado_inicial.tif"
 
-    print(f"=== Teste de Escala com Visualização por Checkpoints ===")
+    print("=== Teste de Escala com Visualização por Checkpoints ===")
     print(f"Grade: {HEIGHT}x{WIDTH} = {HEIGHT*WIDTH:,} células (~{HEIGHT*WIDTH/1024**2:.1f} MB por array uint8)")
     print(f"Salvando quadros PNG apenas nos passos: {ANOS_PARA_SALVAR}\n")
 

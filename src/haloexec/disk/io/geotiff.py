@@ -25,6 +25,7 @@ Requer rasterio (extra opcional "geotiff": pip install -e ".[geotiff]").
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -192,6 +193,7 @@ def save_workspace_to_geotiff(
         raise ImportError("rasterio é necessário — pip install -e '.[geotiff]'")
 
     import warnings
+
     from rasterio.transform import from_origin
 
     path = Path(path)

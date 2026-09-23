@@ -8,7 +8,6 @@ atual do workspace sem materializar nem duplicar a grade inteira em RAM.
 
 from __future__ import annotations
 
-from typing import Any
 import numpy as np
 
 from .workspace import MemmapRasterWorkspace
@@ -39,7 +38,7 @@ class WorkspaceRasterBackend:
         self,
         workspace: MemmapRasterWorkspace,
         stride: int = 1,
-        nodata_value: float | int | None = None,
+        nodata_value: float | None = None,
     ) -> None:
         self.workspace = workspace
         self.stride = max(1, int(stride))

@@ -12,19 +12,17 @@ o que este script realmente testa).
 """
 
 import time
-import resource
 from pathlib import Path
 
 import numpy as np
 import rasterio
-from rasterio.windows import Window
-from rasterio.transform import from_origin
-
 from dissmodel.core import Environment
 from dissmodel.geo import raster_grid
 from dissmodel_ca.models.game_of_life_raster import GameOfLife
+from rasterio.transform import from_origin
+from rasterio.windows import Window
 
-from haloexec import MemmapRasterWorkspace, DiskChunkedRasterCellularAutomaton, load_geotiff_into_workspace
+from haloexec import DiskChunkedRasterCellularAutomaton, MemmapRasterWorkspace, load_geotiff_into_workspace
 
 
 class GameOfLifeHalo(DiskChunkedRasterCellularAutomaton, GameOfLife):
@@ -121,7 +119,7 @@ def main():
 
     resultado_disco = ws.snapshot("state")
 
-    print(f"\n=== resumo de memoria ===")
+    print("\n=== resumo de memoria ===")
     print(f"tamanho de um array completo: {HEIGHT*WIDTH/1024**2:.1f} MB")
     print(f"RssAnon final: {rss_pos_execucao['RssAnon']:.1f} MB "
           f"(razao sobre 1 array: {rss_pos_execucao['RssAnon']/(HEIGHT*WIDTH/1024**2):.2f}x)")
@@ -131,7 +129,7 @@ def main():
     # 30M celulas uint8 cabem em RAM como array UNICO (~30MB) -- o que
     # nao cabe/nao deveria ser feito e materializar durante GERACAO e
     # CARGA do arquivo, que ja foi provado acima via RssAnon.
-    print(f"\n[extra] gerando referencia monolitica na mesma escala para prova de equivalencia...")
+    print("\n[extra] gerando referencia monolitica na mesma escala para prova de equivalencia...")
     with rasterio.open(str(tif_path)) as ds:
         estado0 = ds.read(1)  # aqui SIM materializamos, de proposito, so para a referencia golden
     backend_mono = raster_grid(rows=HEIGHT, cols=WIDTH, attrs={"state": estado0.copy()})

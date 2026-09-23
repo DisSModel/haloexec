@@ -49,7 +49,6 @@ Uso
 from __future__ import annotations
 
 import numpy as np
-
 from dissmodel.geo.raster.backend import RasterBackend
 
 from .workspace import MemmapRasterWorkspace

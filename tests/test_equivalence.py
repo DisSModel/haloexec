@@ -18,6 +18,8 @@ não altera o resultado científico do modelo.
 import numpy as np
 import pytest
 
+pytest.importorskip("dissmodel")
+
 from dissmodel.core import Environment
 from dissmodel.geo.raster.backend import RasterBackend
 from dissmodel.geo.raster.cellular_automaton import RasterCellularAutomaton

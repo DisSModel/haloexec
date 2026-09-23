@@ -1,0 +1,50 @@
+site_name: haloexec
+site_description: Domain decomposition with halo zones for large-scale cellular automata
+site_url: https://dissmodel.github.io/haloexec/
+repo_url: https://github.com/DisSModel/haloexec
+repo_name: haloexec
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: teal
+      accent: green
+  features:
+    - content.code.copy
+    - navigation.sections
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.arithmatex:
+      generic: true
+  # Renders GitHub-style callouts (> [!WARNING]) as admonitions, so the
+  # same Markdown reads correctly both on GitHub and on the site.
+  - github-callouts
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+# docs/README.md is the landing page on GitHub; mkdocs uses it as index.
+nav:
+  - Home: README.md
+  - Theory & Core Concepts: theory_and_concepts.md
+  - Architecture & Design Patterns: architecture.md
+  - API Reference: api_reference.md
+  - Tutorials & Recipes: tutorials_and_recipes.md

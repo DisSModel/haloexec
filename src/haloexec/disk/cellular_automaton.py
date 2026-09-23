@@ -19,12 +19,9 @@ disk/sync_model.py com FloodModel/MangroveModel.
 
 from __future__ import annotations
 
-import numpy as np
-
 from dissmodel.geo.raster.backend import RasterBackend
 
 from .workspace import MemmapRasterWorkspace
-from ..engine import resolve_boundary_value
 
 
 class DiskChunkedRasterCellularAutomaton:

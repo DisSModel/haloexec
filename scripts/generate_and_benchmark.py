@@ -24,7 +24,6 @@ modelo simples — a mecânica de geração/benchmark não muda.
 from __future__ import annotations
 
 import argparse
-import resource
 import shutil
 import time
 from pathlib import Path
@@ -133,9 +132,9 @@ def run_benchmark(
     print(f"RssFile (cache de páginas mmap, reclamável): {m_depois['RssFile']:.1f} MB")
     print(f"VmRSS total (soma dos dois, é o que ru_maxrss mediria): {m_depois['VmRSS']:.1f} MB")
     print(f"Tamanho de um array completo em disco: {grid_bytes / 1024**2:.1f} MB")
-    print(f"→ RssAnon é a métrica correta para 'quanto o processo materializou "
-          f"de fato'; RssFile cresce com o volume TOCADO acumulado (cache), "
-          f"não com o que está retido de uma vez.")
+    print("→ RssAnon é a métrica correta para 'quanto o processo materializou "
+          "de fato'; RssFile cresce com o volume TOCADO acumulado (cache), "
+          "não com o que está retido de uma vez.")
 
     if not keep:
         shutil.rmtree(root)

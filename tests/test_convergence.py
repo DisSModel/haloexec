@@ -87,7 +87,7 @@ def test_sweep_until_convergence_stress_random_seeds(tmp_path, seed):
     seeds, permeable = _labyrinth_scenario(35, 35, seed)
 
     golden = _run_monolithic(seeds, permeable)
-    chunked, info = _run_chunked(tmp_path, seeds, permeable, block_h=7, block_w=7)
+    chunked, _info = _run_chunked(tmp_path, seeds, permeable, block_h=7, block_w=7)
 
     assert np.array_equal(golden, chunked)
 

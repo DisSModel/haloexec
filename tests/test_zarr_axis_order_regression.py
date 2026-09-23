@@ -111,3 +111,27 @@ def test_load_zarr_handles_txy_axis_order_temporal(tmp_path):
     load_zarr_into_workspace(ws, str(store), variable_map={"mangue": "mangue"}, time_index=1)
 
     assert np.array_equal(ws.snapshot("mangue"), serie[1])
+
+
+def test_load_zarr_handles_xy_axis_order_zarr_v2_format(tmp_path):
+    """Store no FORMATO Zarr v2 (ex.: gravado por xarray/disscube mais
+    antigos, ou com zarr_format=2): não existe metadata.dimension_names,
+    o xarray guarda os nomes no atributo `_ARRAY_DIMENSIONS`. Mesmo
+    lendo com zarr-python 3, sem o fallback para esse atributo o array
+    quadrado (x, y) era carregado TRANSPOSTO, silenciosamente."""
+    n = 6
+    data = np.arange(n * n).reshape(n, n).astype("int16")
+    store = tmp_path / "v2.zarr"
+    da = xr.DataArray(data.T, dims=("x", "y"), name="uso")
+    da.to_dataset(name="uso").to_zarr(str(store), mode="w", consolidated=False, zarr_format=2)
+
+    ws = MemmapRasterWorkspace.create(
+        root=tmp_path / "workspace", shape=(n, n),
+        arrays={"uso": np.int16}, block_h=3, block_w=3, halo=1,
+    )
+    load_zarr_into_workspace(ws, str(store), variable_map={"uso": "uso"})
+
+    assert np.array_equal(ws.snapshot("uso"), data), (
+        "Zarr formato v2 com eixos (x, y) carregado transposto -- "
+        "fallback para _ARRAY_DIMENSIONS ausente"
+    )
