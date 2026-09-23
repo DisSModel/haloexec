@@ -1,5 +1,5 @@
 """
-Testes para WorkspaceRasterBackend e CheckpointRasterMap.
+Tests for WorkspaceRasterBackend and CheckpointRasterMap.
 """
 
 from pathlib import Path
@@ -78,7 +78,7 @@ def test_checkpoint_raster_map_filtering(tmp_path: Path, monkeypatch):
     env = Environment(start_time=1, end_time=5)
     _GoLHalo(workspace=ws, halo=1, boundary_value=0)
 
-    # Só salvar os passos 1 e 4
+    # Save only steps 1 and 4
     save_steps = [1, 4]
     CheckpointRasterMap(
         backend=adapter,
@@ -125,7 +125,7 @@ def test_save_workspace_to_geotiff_roundtrip(tmp_path: Path):
         assert np.array_equal(ds.read(1), uso_data)
         assert np.allclose(ds.read(2), alt_data)
 
-    # Verifica também o método as_backend do workspace
+    # Also check the workspace's as_backend method
     backend = ws1.as_backend(stride=2)
     assert backend.shape == (30, 40)
     assert np.array_equal(backend.arrays["uso"], uso_data[::2, ::2])

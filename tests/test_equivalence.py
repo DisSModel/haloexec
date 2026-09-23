@@ -1,18 +1,18 @@
 """
-Prova de equivalência matemática usando a maquinaria REAL do dissmodel
-(Environment, RasterBackend, RasterCellularAutomaton) — não um harness
-isolado.
+Mathematical equivalence proof using the REAL dissmodel machinery
+(Environment, RasterBackend, RasterCellularAutomaton) — not an isolated
+harness.
 
-A mesma regra de Game of Life é escrita uma única vez (via mixin) e
-executada por duas classes base diferentes:
+The same Game of Life rule is written once (through a mixin) and run by
+two different base classes:
 
-  - GameOfLifeMono   (dissmodel.RasterCellularAutomaton)      — monolítica
-  - GameOfLifeHalo   (haloexec.HaloChunkedRasterCellularAutomaton) — em blocos
+  - GameOfLifeMono   (dissmodel.RasterCellularAutomaton)      — monolithic
+  - GameOfLifeHalo   (haloexec.HaloChunkedRasterCellularAutomaton) — in blocks
 
-O resultado final deve ser IDÊNTICO célula a célula após N passos de
-tempo, para qualquer decomposição de domínio válida. Isso prova que
-trocar a classe base (a mudança real que o BR-MANGUE fará na migração)
-não altera o resultado científico do modelo.
+The final result must be IDENTICAL cell by cell after N time steps, for
+any valid domain decomposition. This proves that swapping the base class
+(the actual change a model makes to migrate) does not change the model's
+scientific result.
 """
 
 import numpy as np
@@ -28,7 +28,7 @@ from haloexec import HaloChunkedRasterCellularAutomaton
 
 
 class GameOfLifeRuleMixin:
-    """Regra escrita uma única vez, reutilizada pelas duas classes base."""
+    """Rule written once, reused by both base classes."""
 
     def rule(self, arrays):
         state = arrays["state"]

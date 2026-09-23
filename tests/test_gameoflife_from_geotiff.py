@@ -1,16 +1,14 @@
 """
-Prova de equivalência ponta a ponta: Game of Life carregado de um
-GeoTIFF (simulando o resultado de um mosaico já materializado — ver
-mosaic_io.py) direto para MemmapRasterWorkspace, executado em
-blocos+halo, comparado a uma execução monolítica em RAM carregada do
-MESMO arquivo.
+End-to-end equivalence proof: Game of Life loaded from a GeoTIFF
+(standing in for an already materialized mosaic) straight into a
+MemmapRasterWorkspace, run in blocks+halo, compared with a monolithic
+in-RAM run loaded from the SAME file.
 
-Fecha o ciclo que faltava: os testes anteriores validam (a) o motor de
-blocos+halo com dado sintético em RAM/disco, e (b) o carregamento de
-TIFF/mosaico isoladamente (round-trip, sem rodar nenhum modelo em
-cima). Este teste roda um modelo de verdade a partir de um TIFF de
-verdade, incluindo um caso "grande" (maior que os testes sintéticos
-anteriores) para dar mais confiança de escala.
+Closes the loop: the other tests validate (a) the blocks+halo engine
+with synthetic data in RAM/on disk, and (b) TIFF/mosaic loading on its
+own (round trip, with no model running on top). This test runs a real
+model from a real TIFF, including a "large" case (bigger than the
+synthetic tests) for more confidence at scale.
 """
 
 from pathlib import Path
@@ -80,8 +78,8 @@ def _run_disk_from_tiff(path: Path, tmp_path: Path, generations: int,
 @pytest.mark.parametrize(
     "height, width, block_h, block_w, generations, seed, label",
     [
-        (40, 40, 10, 10, 10, 42, "pequeno_grade_divisivel"),
-        (37, 53, 8, 12, 8, 7, "pequeno_com_resto"),
+        (40, 40, 10, 10, 10, 42, "small_grid_divides_exactly"),
+        (37, 53, 8, 12, 8, 7, "small_with_remainder"),
     ],
 )
 def test_gameoflife_from_geotiff_equivalence(tmp_path, height, width, block_h, block_w,
@@ -89,20 +87,19 @@ def test_gameoflife_from_geotiff_equivalence(tmp_path, height, width, block_h, b
     rng = np.random.default_rng(seed)
     initial = (rng.random((height, width)) < 0.35).astype(np.uint8)
 
-    tif_path = tmp_path / "mosaico.tif"
+    tif_path = tmp_path / "mosaic.tif"
     _write_geotiff(tif_path, initial)
 
     golden = _run_monolithic_from_tiff(tif_path, generations)
     disk = _run_disk_from_tiff(tif_path, tmp_path, generations, block_h, block_w)
 
-    assert np.array_equal(golden, disk), f"[{label}] divergência pós-TIFF"
+    assert np.array_equal(golden, disk), f"[{label}] mismatch after TIFF round trip"
 
 
 def test_gameoflife_from_large_geotiff():
-    """Caso 'grande': TIFF de 2000x2000 (4 milhões de células), gerado
-    bloco a bloco (nunca materializado inteiro em RAM na geração),
-    lido bloco a bloco, rodado em blocos+halo — a mesma cadeia
-    mosaico->TIFF->disco->halo que seria usada com um mosaico real."""
+    """'Large' case: a 2000x2000 TIFF (4 million cells), read block by
+    block and run in blocks+halo — the same mosaic->TIFF->disk->halo
+    chain that would be used with a real mosaic."""
     import shutil
     import tempfile
 
@@ -112,7 +109,7 @@ def test_gameoflife_from_large_geotiff():
         rng = np.random.default_rng(99)
         initial = (rng.random((height, width)) < 0.35).astype(np.uint8)
 
-        tif_path = tmp_path / "mosaico_grande.tif"
+        tif_path = tmp_path / "large_mosaic.tif"
         _write_geotiff(tif_path, initial)
 
         generations = 3
@@ -120,6 +117,6 @@ def test_gameoflife_from_large_geotiff():
         disk = _run_disk_from_tiff(tif_path, tmp_path, generations, block_h=256, block_w=256)
 
         n_diff = int(np.sum(golden != disk))
-        assert n_diff == 0, f"{n_diff}/{height*width} células divergentes no caso grande"
+        assert n_diff == 0, f"{n_diff}/{height*width} cells differ in the large case"
     finally:
         shutil.rmtree(tmp_path, ignore_errors=True)

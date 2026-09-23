@@ -1,21 +1,22 @@
 """
-Teste de integração haloexec <-> disscube (pacotes separados, sem
-dependência de runtime entre si).
+haloexec <-> disscube integration test (separate packages, no runtime
+dependency between them).
 
-Prova que `load_zarr_tiles_into_workspace` monta corretamente um mosaico
-de N stores Zarr posicionados lado a lado — inclusive para blocos cujo
-halo CRUZA a fronteira entre dois arquivos, e para buracos da malha.
+Proves that `load_zarr_tiles_into_workspace` correctly assembles a
+mosaic of N Zarr stores placed side by side — including blocks whose
+halo CROSSES the boundary between two files, and holes in the tiling.
 
-É o análogo, para Zarr, do que `test_geomosaic_integration.py` prova para
-GeoTIFF/VRT. A diferença importa: no caso VRT o GDAL costura antes do
-haloexec entrar em cena, então um erro de posicionamento apareceria já na
-leitura do VRT. Aqui a costura é feita por este módulo, tile a tile — um
-offset errado, ou um tile faltando, produz dado errado numa fronteira e
-em mais lugar nenhum. Por isso os testes miram exatamente as fronteiras.
+It is the Zarr counterpart of what `test_geomosaic_integration.py`
+proves for GeoTIFF/VRT. The difference matters: with a VRT, GDAL does
+the stitching before haloexec comes in, so a positioning error would
+already show when reading the VRT. Here the stitching is done by this
+module, tile by tile — a wrong offset, or a missing tile, produces wrong
+data at one boundary and nowhere else. That is why the tests aim
+precisely at the boundaries.
 
-O formato do layout (chaves e semântica) é o contrato com
-`CubeClient.tile_layout()` do disscube; `test_layout_shape_matches_disscube`
-o fixa dos dois lados quando o disscube está instalado.
+The layout format (keys and semantics) is the contract with disscube's
+`CubeClient.tile_layout()`; `test_layout_shape_matches_disscube` pins it
+from both sides when disscube is installed.
 """
 
 import numpy as np
@@ -29,12 +30,12 @@ from haloexec import (
     load_zarr_tiles_into_workspace,
 )
 
-T = 8   # lado de cada tile — pequeno para as fronteiras ficarem inspecionáveis
+T = 8   # side of each tile — small, so the boundaries stay inspectable
 
 
 def _write_tile(path, data):
-    """Grava um array 2D como store Zarr com dimension_names (y, x),
-    do mesmo jeito que xarray.to_zarr grava — que é como o disscube grava."""
+    """Write a 2-D array as a Zarr store with dimension_names (y, x),
+    the same way xarray.to_zarr writes it — which is how disscube writes."""
     root = zarr.open_group(str(path), mode="w")
     arr = root.create_array(
         "v", shape=data.shape, dtype=str(data.dtype), dimension_names=("y", "x")
@@ -50,12 +51,12 @@ def _ws(tmp_path, shape, block=4, halo=1, dtype="float64"):
     )
 
 
-def _quadrantes(tmp_path, valores):
-    """Quatro tiles TxT num workspace 2Tx2T. `valores` dá o valor constante
-    de cada quadrante: (NO, NE, SO, SE). None = tile ausente (buraco)."""
+def _quadrants(tmp_path, values):
+    """Four TxT tiles in a 2Tx2T workspace. `values` gives the constant
+    value of each quadrant: (NW, NE, SW, SE). None = missing tile (hole)."""
     pos = [(0, 0), (0, T), (T, 0), (T, T)]
     tiles = []
-    for i, ((r, c), val) in enumerate(zip(pos, valores)):
+    for i, ((r, c), val) in enumerate(zip(pos, values)):
         if val is None:
             continue
         url = _write_tile(tmp_path / f"t{i}.zarr", np.full((T, T), val, dtype="float64"))
@@ -66,123 +67,124 @@ def _quadrantes(tmp_path, valores):
     return tiles
 
 
-# ── montagem básica ──────────────────────────────────────────────────────────
+# ── basic assembly ───────────────────────────────────────────────────────────
 
 def test_four_tiles_land_in_their_own_quadrants(tmp_path):
     ws = _ws(tmp_path, (2 * T, 2 * T))
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, 3.0, 4.0)))
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, 3.0, 4.0)))
 
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
     full = np.empty((2 * T, 2 * T))
-    for b in lido.blocks():
-        full[b.r0:b.r1, b.c0:b.c1] = lido.read_block_core(b, "v")
+    for b in reopened.blocks():
+        full[b.r0:b.r1, b.c0:b.c1] = reopened.read_block_core(b, "v")
 
-    assert np.all(full[:T, :T] == 1.0), "quadrante NO"
-    assert np.all(full[:T, T:] == 2.0), "quadrante NE"
-    assert np.all(full[T:, :T] == 3.0), "quadrante SO"
-    assert np.all(full[T:, T:] == 4.0), "quadrante SE"
+    assert np.all(full[:T, :T] == 1.0), "NW quadrant"
+    assert np.all(full[:T, T:] == 2.0), "NE quadrant"
+    assert np.all(full[T:, :T] == 3.0), "SW quadrant"
+    assert np.all(full[T:, T:] == 4.0), "SE quadrant"
 
 
 def test_row_and_column_offsets_are_not_swapped(tmp_path):
-    """Trocar row_off por col_off transporia o mosaico — e com tiles
-    quadrados o shape continuaria certo, então só o conteúdo denuncia."""
+    """Swapping row_off and col_off would transpose the mosaic — and with
+    square tiles the shape would still be right, so only the content
+    gives it away."""
     ws = _ws(tmp_path, (2 * T, 2 * T))
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, 3.0, 4.0)))
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
-    ne = lido.read_block_core(Block(r0=0, r1=4, c0=T, c1=T + 4), "v")
-    so = lido.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v")
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, 3.0, 4.0)))
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
+    ne = reopened.read_block_core(Block(r0=0, r1=4, c0=T, c1=T + 4), "v")
+    so = reopened.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v")
     assert np.all(ne == 2.0) and np.all(so == 3.0)
 
 
-# ── fronteiras: o que este módulo pode quebrar sozinho ───────────────────────
+# ── boundaries: what this module can break on its own ───────────────────────
 
 def test_halo_crosses_boundary_between_two_zarr_files(tmp_path):
-    """A janela com halo tem de trazer o valor do tile VIZINHO — que veio
-    de outro arquivo — e não o do próprio tile nem nodata."""
+    """The halo window must bring the value of the NEIGHBOURING tile —
+    which came from another file — not the tile's own value nor nodata."""
     ws = _ws(tmp_path, (2 * T, 2 * T), block=4, halo=1)
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, 3.0, 4.0)))
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, 3.0, 4.0)))
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
 
-    # bloco encostado na fronteira vertical: halo à direita cai no tile NE
+    # block touching the vertical boundary: its right halo falls in the NE tile
     blk = Block(r0=0, r1=4, c0=T - 4, c1=T)
-    jan = lido.read_block_with_halo(blk, boundary_value=np.nan)["v"]
-    assert np.all(jan[1:-1, 1:-1] == 1.0), "núcleo é do tile NO"
-    assert np.all(jan[1:-1, -1] == 2.0), "halo direito tem de vir do tile NE"
+    win = reopened.read_block_with_halo(blk, boundary_value=np.nan)["v"]
+    assert np.all(win[1:-1, 1:-1] == 1.0), "the core belongs to the NW tile"
+    assert np.all(win[1:-1, -1] == 2.0), "the right halo must come from the NE tile"
 
 
 def test_halo_crosses_horizontal_boundary(tmp_path):
     ws = _ws(tmp_path, (2 * T, 2 * T), block=4, halo=1)
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, 3.0, 4.0)))
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, 3.0, 4.0)))
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
     blk = Block(r0=T - 4, r1=T, c0=0, c1=4)
-    jan = lido.read_block_with_halo(blk, boundary_value=np.nan)["v"]
-    assert np.all(jan[1:-1, 1:-1] == 1.0)
-    assert np.all(jan[-1, 1:-1] == 3.0), "halo inferior tem de vir do tile SO"
+    win = reopened.read_block_with_halo(blk, boundary_value=np.nan)["v"]
+    assert np.all(win[1:-1, 1:-1] == 1.0)
+    assert np.all(win[-1, 1:-1] == 3.0), "the bottom halo must come from the SW tile"
 
 
 def test_block_straddling_a_boundary_is_assembled_from_both_files(tmp_path):
-    """Um bloco que cai metade num tile e metade no outro precisa das duas
-    metades — é o caso que quebra se a montagem for feita tile a tile."""
+    """A block that falls half in one tile and half in the other needs
+    both halves — the case that breaks if assembly is done tile by tile."""
     ws = _ws(tmp_path, (2 * T, 2 * T), block=4, halo=1)
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, 3.0, 4.0)))
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
-    nucleo = lido.read_block_core(Block(r0=0, r1=4, c0=T - 2, c1=T + 2), "v")
-    assert np.all(nucleo[:, :2] == 1.0) and np.all(nucleo[:, 2:] == 2.0)
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, 3.0, 4.0)))
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
+    core_values = reopened.read_block_core(Block(r0=0, r1=4, c0=T - 2, c1=T + 2), "v")
+    assert np.all(core_values[:, :2] == 1.0) and np.all(core_values[:, 2:] == 2.0)
 
 
-# ── buracos da malha ─────────────────────────────────────────────────────────
+# ── holes in the tiling ──────────────────────────────────────────────────────
 
 def test_missing_tile_becomes_fill_not_garbage(tmp_path):
-    """Buraco real da malha (o MapBiomas tem vários) vira nodata."""
+    """A real hole in the tiling (MapBiomas exports have several) becomes nodata."""
     ws = _ws(tmp_path, (2 * T, 2 * T))
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, None, 4.0)))
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
-    buraco = lido.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v")
-    assert np.all(np.isnan(buraco))
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, None, 4.0)))
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
+    hole = reopened.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v")
+    assert np.all(np.isnan(hole))
 
 
 def test_halo_over_a_hole_is_fill_while_core_keeps_data(tmp_path):
     ws = _ws(tmp_path, (2 * T, 2 * T), block=4, halo=1)
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, None, 4.0)))
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
-    blk = Block(r0=T - 4, r1=T, c0=0, c1=4)          # último bloco do tile NO
-    jan = lido.read_block_with_halo(blk, boundary_value=0.0)["v"]
-    assert np.all(jan[1:-1, 1:-1] == 1.0), "núcleo mantém o dado"
-    assert np.all(np.isnan(jan[-1, 1:-1])), "halo cai no buraco -> fill"
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, None, 4.0)))
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
+    blk = Block(r0=T - 4, r1=T, c0=0, c1=4)          # last block of the NW tile
+    win = reopened.read_block_with_halo(blk, boundary_value=0.0)["v"]
+    assert np.all(win[1:-1, 1:-1] == 1.0), "the core keeps the data"
+    assert np.all(np.isnan(win[-1, 1:-1])), "the halo falls in the hole -> fill"
 
 
 def test_explicit_fill_value_is_used(tmp_path):
     ws = _ws(tmp_path, (2 * T, 2 * T))
     load_zarr_tiles_into_workspace(
-        ws, _quadrantes(tmp_path, (1.0, 2.0, None, 4.0)), fill=-9999.0
+        ws, _quadrants(tmp_path, (1.0, 2.0, None, 4.0)), fill=-9999.0
     )
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
-    assert np.all(lido.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v") == -9999.0)
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
+    assert np.all(reopened.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v") == -9999.0)
 
 
 def test_skip_empty_blocks_leaves_them_zero(tmp_path):
-    """Modo de economia de disco: bloco vazio não é escrito, então lê zero
-    (não `fill`) — a troca documentada no README."""
+    """Disk-saving mode: an empty block is not written, so it reads zero
+    (not `fill`) — the trade-off documented in the README."""
     ws = _ws(tmp_path, (2 * T, 2 * T))
     load_zarr_tiles_into_workspace(
-        ws, _quadrantes(tmp_path, (1.0, 2.0, None, 4.0)), skip_empty_blocks=True
+        ws, _quadrants(tmp_path, (1.0, 2.0, None, 4.0)), skip_empty_blocks=True
     )
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
-    assert np.all(lido.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v") == 0.0)
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
+    assert np.all(reopened.read_block_core(Block(r0=T, r1=T + 4, c0=0, c1=4), "v") == 0.0)
 
 
-# ── contrato e erros ─────────────────────────────────────────────────────────
+# ── contract and errors ──────────────────────────────────────────────────────
 
 def test_single_tile_covering_the_grid_also_works(tmp_path):
-    """Variável global (sem tiles) chega como layout de um item só."""
+    """A global variable (no tiles) arrives as a one-item layout."""
     ws = _ws(tmp_path, (T, T))
     url = _write_tile(tmp_path / "g.zarr", np.arange(T * T, dtype="float64").reshape(T, T))
     load_zarr_tiles_into_workspace(ws, [{
         "tile_id": None, "variable": "v", "url": url,
         "row_off": 0, "col_off": 0, "height": T, "width": T,
     }])
-    lido = MemmapRasterWorkspace(tmp_path / "ws")
-    assert lido.read_block_core(Block(r0=0, r1=2, c0=0, c1=2), "v")[0, 0] == 0.0
+    reopened = MemmapRasterWorkspace(tmp_path / "ws")
+    assert reopened.read_block_core(Block(r0=0, r1=2, c0=0, c1=2), "v")[0, 0] == 0.0
 
 
 def test_array_name_can_differ_from_variable_name(tmp_path):
@@ -201,7 +203,7 @@ def test_array_name_can_differ_from_variable_name(tmp_path):
 
 def test_empty_tile_list_raises(tmp_path):
     ws = _ws(tmp_path, (T, T))
-    with pytest.raises(ValueError, match="vazia"):
+    with pytest.raises(ValueError, match="empty"):
         load_zarr_tiles_into_workspace(ws, [])
 
 
@@ -214,30 +216,30 @@ def test_missing_key_names_what_is_missing(tmp_path):
 def test_undeclared_array_raises(tmp_path):
     ws = _ws(tmp_path, (T, T))
     url = _write_tile(tmp_path / "g.zarr", np.ones((T, T)))
-    with pytest.raises(ValueError, match="não declara"):
+    with pytest.raises(ValueError, match="does not declare"):
         load_zarr_tiles_into_workspace(ws, [{
-            "tile_id": None, "variable": "inexistente", "url": url,
+            "tile_id": None, "variable": "nonexistent", "url": url,
             "row_off": 0, "col_off": 0, "height": T, "width": T,
         }])
 
 
 def test_tile_outside_workspace_raises(tmp_path):
-    """Um tile fora dos limites significa grade errada — falhar alto evita
-    um mosaico truncado que passaria despercebido."""
+    """A tile out of bounds means a wrong grid — failing loudly avoids a
+    truncated mosaic that would go unnoticed."""
     ws = _ws(tmp_path, (T, T))
     url = _write_tile(tmp_path / "g.zarr", np.ones((T, T)))
-    with pytest.raises(ValueError, match="não cabe"):
+    with pytest.raises(ValueError, match="does not fit"):
         load_zarr_tiles_into_workspace(ws, [{
-            "tile_id": "fora", "variable": "v", "url": url,
+            "tile_id": "outside", "variable": "v", "url": url,
             "row_off": T, "col_off": 0, "height": T, "width": T,
         }])
 
 
-# ── o contrato com o disscube, quando ele está disponível ────────────────────
+# ── the contract with disscube, when it is available ────────────────────────
 
 def test_layout_shape_matches_disscube(tmp_path):
-    """Fixa que as chaves que este loader exige são as que o
-    CubeClient.tile_layout() produz. Sem o disscube instalado, pula."""
+    """Pins that the keys this loader requires are the ones
+    CubeClient.tile_layout() produces. Skipped without disscube."""
     pytest.importorskip("disscube")
     from disscube.client import CubeClient
     from disscube.models import DerivedVariable, GridSpec, SpatialSource
@@ -256,23 +258,23 @@ def test_layout_shape_matches_disscube(tmp_path):
         derivation_id="d", spec_hash="h", tile_id="T1", asset_url="x.zarr",
     ))
 
-    exigidas = {"url", "variable", "row_off", "col_off", "height", "width"}
-    assert exigidas <= set(cube.tile_layout("v", "G")[0])
+    required = {"url", "variable", "row_off", "col_off", "height", "width"}
+    assert required <= set(cube.tile_layout("v", "G")[0])
 
 
-# ── posições sobrepostas ─────────────────────────────────────────────────────
-# Defesa em profundidade: mesmo que o layout venha errado de qualquer origem,
-# dois pedaços na mesma posição não devem ser aceitos. O caso real que motivou
-# isto: uma variável temporal cujo layout misturava as fatias de vários anos,
-# todas nas mesmas posições — carregar isso deixaria o último ano vencer, sem
-# erro nenhum.
+# ── overlapping positions ────────────────────────────────────────────────────
+# Defence in depth: even if the layout comes out wrong from any source, two
+# pieces at the same position must not be accepted. The real case behind
+# this: a temporal variable whose layout mixed the slices of several years,
+# all at the same positions — loading it would let the last year win, with
+# no error at all.
 
 def test_two_tiles_at_the_same_position_raise(tmp_path):
     ws = _ws(tmp_path, (T, T))
     a = _write_tile(tmp_path / "a.zarr", np.ones((T, T)))
     b = _write_tile(tmp_path / "b.zarr", np.full((T, T), 2.0))
     base = {"variable": "v", "row_off": 0, "col_off": 0, "height": T, "width": T}
-    with pytest.raises(ValueError, match="ocupam a posição"):
+    with pytest.raises(ValueError, match="occupy position"):
         load_zarr_tiles_into_workspace(ws, [
             {**base, "tile_id": "1985", "url": a},
             {**base, "tile_id": "1995", "url": b},
@@ -285,13 +287,13 @@ def test_overlap_error_names_both_tiles(tmp_path):
     base = {"variable": "v", "row_off": 0, "col_off": 0, "height": T, "width": T}
     with pytest.raises(ValueError) as exc:
         load_zarr_tiles_into_workspace(ws, [
-            {**base, "tile_id": "primeiro", "url": a},
-            {**base, "tile_id": "segundo", "url": a},
+            {**base, "tile_id": "first", "url": a},
+            {**base, "tile_id": "second", "url": a},
         ])
-    assert "primeiro" in str(exc.value) and "segundo" in str(exc.value)
+    assert "first" in str(exc.value) and "second" in str(exc.value)
 
 
 def test_distinct_positions_still_accepted(tmp_path):
-    """Guarda: a checagem não pode recusar um mosaico legítimo."""
+    """Guard: the check must not reject a legitimate mosaic."""
     ws = _ws(tmp_path, (2 * T, 2 * T))
-    load_zarr_tiles_into_workspace(ws, _quadrantes(tmp_path, (1.0, 2.0, 3.0, 4.0)))
+    load_zarr_tiles_into_workspace(ws, _quadrants(tmp_path, (1.0, 2.0, 3.0, 4.0)))

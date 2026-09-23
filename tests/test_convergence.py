@@ -1,12 +1,11 @@
 """
-Prova de equivalência para sweep_until_convergence, usando exatamente
-o caso de uso que motivou a primitiva: propagação de conectividade
-(binary_propagation) por blocos+halo+varreduras, comparada a um
-binary_propagation monolítico no domínio inteiro de uma vez.
+Equivalence proof for sweep_until_convergence, using exactly the use
+case that motivated the primitive: connectivity propagation
+(binary_propagation) through blocks+halo+sweeps, compared with a
+monolithic binary_propagation over the whole domain at once.
 
-Isso é a prova que o protótipo original (chunked_engine.py::propagar_conectividade)
-nunca teve — nenhum teste lá confirmava que a versão em blocos convergia
-para o mesmo resultado exato que a versão monolítica.
+It confirms that the block version converges to exactly the same result
+as the monolithic one.
 """
 
 import numpy as np
@@ -19,13 +18,13 @@ from haloexec import MemmapRasterWorkspace, sweep_until_convergence
 
 
 def _connectivity_rule(window: dict[str, np.ndarray], halo: int = 1) -> dict[str, np.ndarray]:
-    """Mesma lógica do aluno: dilata 'conectado' através de 'permeavel',
-    dentro da janela com halo, e devolve só o núcleo."""
-    connected = window["conectado"].astype(bool)
-    permeable = window["permeavel"].astype(bool)
+    """Dilate 'connected' through 'permeable' inside the halo window,
+    and return only the core."""
+    connected = window["connected"].astype(bool)
+    permeable = window["permeable"].astype(bool)
     propagated = binary_propagation(connected, mask=permeable)
     core = propagated[halo:-halo, halo:-halo]
-    return {"conectado": core.astype(np.uint8)}
+    return {"connected": core.astype(np.uint8)}
 
 
 def _run_monolithic(seeds: np.ndarray, permeable: np.ndarray) -> np.ndarray:
@@ -36,28 +35,28 @@ def _run_chunked(tmp_path, seeds: np.ndarray, permeable: np.ndarray,
                   block_h: int, block_w: int, halo: int = 1) -> tuple[np.ndarray, dict]:
     ws = MemmapRasterWorkspace.create(
         root=tmp_path / "workspace", shape=seeds.shape,
-        arrays={"conectado": np.uint8, "permeavel": np.uint8},
+        arrays={"connected": np.uint8, "permeable": np.uint8},
         block_h=block_h, block_w=block_w, halo=halo,
     )
-    ws.fill("conectado", seeds.astype(np.uint8))
-    ws.fill("permeavel", permeable.astype(np.uint8))
+    ws.fill("connected", seeds.astype(np.uint8))
+    ws.fill("permeable", permeable.astype(np.uint8))
 
     info = sweep_until_convergence(
         ws, lambda w: _connectivity_rule(w, halo), boundary_value=0,
     )
     ws.flush()
-    return ws.snapshot("conectado"), info
+    return ws.snapshot("connected"), info
 
 
 def _labyrinth_scenario(height: int, width: int, seed: int) -> tuple[np.ndarray, np.ndarray]:
-    """Gera um labirinto de permeabilidade que força a conectividade a
-    serpentear por várias fronteiras de bloco antes de convergir —
-    testa de verdade a propagação através de múltiplos blocos, não só
-    vizinhança imediata de uma fonte central."""
+    """Build a permeability labyrinth that forces connectivity to wind
+    across several block boundaries before converging — it really tests
+    propagation through many blocks, not just the immediate
+    neighbourhood of a central source."""
     rng = np.random.default_rng(seed)
-    permeable = rng.random((height, width)) < 0.65  # a maioria é permeável
+    permeable = rng.random((height, width)) < 0.65  # most cells are permeable
     seeds = np.zeros((height, width), dtype=bool)
-    seeds[0, 0] = True  # única fonte, no canto -- força propagação longa
+    seeds[0, 0] = True  # single source, in the corner -- forces a long propagation
     permeable[0, 0] = True
     return seeds, permeable
 
@@ -65,10 +64,10 @@ def _labyrinth_scenario(height: int, width: int, seed: int) -> tuple[np.ndarray,
 @pytest.mark.parametrize(
     "height, width, block_h, block_w, seed, label",
     [
-        (40, 40, 10, 10, 42, "grade_divisivel_exatamente"),
-        (37, 53, 8, 12, 7, "grade_com_resto_blocos_irregulares"),
-        (30, 30, 6, 6, 123, "blocos_pequenos_muitas_fronteiras"),
-        (20, 20, 100, 100, 99, "bloco_maior_que_grade"),
+        (40, 40, 10, 10, 42, "grid_divides_exactly"),
+        (37, 53, 8, 12, 7, "grid_with_remainder_irregular_blocks"),
+        (30, 30, 6, 6, 123, "small_blocks_many_boundaries"),
+        (20, 20, 100, 100, 99, "block_larger_than_grid"),
     ],
 )
 def test_sweep_until_convergence_equivalence(tmp_path, height, width, block_h, block_w, seed, label):
@@ -78,7 +77,7 @@ def test_sweep_until_convergence_equivalence(tmp_path, height, width, block_h, b
     chunked, info = _run_chunked(tmp_path, seeds, permeable, block_h, block_w)
 
     n_diff = int(np.sum(golden != chunked))
-    assert n_diff == 0, f"[{label}] {n_diff}/{height*width} células divergentes (info={info})"
+    assert n_diff == 0, f"[{label}] {n_diff}/{height*width} cells differ (info={info})"
     assert info["converged"]
 
 
@@ -93,31 +92,31 @@ def test_sweep_until_convergence_stress_random_seeds(tmp_path, seed):
 
 
 def test_sweep_until_convergence_raises_if_never_converges(tmp_path):
-    """Regra que sempre 'muda' algo (nunca estabiliza) deve estourar
-    RuntimeError, não travar num loop silencioso."""
+    """A rule that always 'changes' something (never settles) must raise
+    RuntimeError, not hang in a silent loop."""
     ws = MemmapRasterWorkspace.create(
         root=tmp_path / "workspace", shape=(10, 10),
-        arrays={"contador": np.uint8}, block_h=5, block_w=5, halo=1,
+        arrays={"counter": np.uint8}, block_h=5, block_w=5, halo=1,
     )
-    ws.fill("contador", np.zeros((10, 10), dtype=np.uint8))
+    ws.fill("counter", np.zeros((10, 10), dtype=np.uint8))
 
-    def regra_instavel(window):
-        # sempre incrementa -- nunca converge
-        core = window["contador"][1:-1, 1:-1]
-        return {"contador": (core + 1) % 250}
+    def unstable_rule(window):
+        # always increments -- never converges
+        core = window["counter"][1:-1, 1:-1]
+        return {"counter": (core + 1) % 250}
 
-    with pytest.raises(RuntimeError, match="não convergiu"):
-        sweep_until_convergence(ws, regra_instavel, max_sweeps=3)
+    with pytest.raises(RuntimeError, match="did not converge"):
+        sweep_until_convergence(ws, unstable_rule, max_sweeps=3)
 
 
 def test_sweep_until_convergence_reports_sweep_count(tmp_path):
-    """Uma única célula-fonte isolada (sem vizinho permeável) converge
-    na primeira varredura -- caso trivial, serve de sanity check do
-    contador de varreduras."""
+    """A single isolated source cell (no permeable neighbour) converges
+    in the first sweep -- a trivial case, a sanity check of the sweep
+    counter."""
     seeds = np.zeros((10, 10), dtype=bool)
     seeds[5, 5] = True
     permeable = np.zeros((10, 10), dtype=bool)
-    permeable[5, 5] = True  # isolada -- nao tem pra onde propagar
+    permeable[5, 5] = True  # isolated -- nowhere to propagate
 
     _, info = _run_chunked(tmp_path, seeds, permeable, block_h=5, block_w=5)
     assert info["sweeps"] == 1

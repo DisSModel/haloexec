@@ -1,37 +1,38 @@
 """
-Integração com dissmodel: HaloChunkedSyncRasterModel.
+dissmodel integration: HaloChunkedSyncRasterModel.
 
-Diferente de RasterCellularAutomaton (que expõe um hook rule(arrays)
-dedicado), modelos baseados em SyncRasterModel/RasterModel — como o
-FloodModel do BR-MANGUE — implementam a lógica científica diretamente
-em execute(), lendo/escrevendo arrays nomeados no backend
-(self.backend.arrays["alt"], self.backend.get("uso_past"), etc.) e
-usando self.shape/self.shift/self.dirs herdados de RasterModel.
+Unlike RasterCellularAutomaton (which exposes a dedicated rule(arrays)
+hook), models based on SyncRasterModel/RasterModel — such as a flood
+model — implement their scientific logic directly in execute(), reading
+and writing named arrays on the backend (self.backend.arrays["alt"],
+self.backend.get("uso_past"), etc.) and using self.shape/self.shift/
+self.dirs inherited from RasterModel.
 
-Este módulo generaliza a mesma estratégia de chunking+halo para esse
-padrão, via herança múltipla cooperativa (mixin): HaloChunkedSyncRasterModel
-intercepta execute() e setup(), delega a lógica real para a subclasse
-concreta via super().execute(), com self.backend/self.shape trocados
-temporariamente para uma sub-grade local por bloco.
+This module extends the same chunking+halo strategy to that pattern,
+through cooperative multiple inheritance (a mixin):
+HaloChunkedSyncRasterModel intercepts execute() and setup() and
+delegates the real logic to the concrete subclass through
+super().execute(), with self.backend/self.shape temporarily swapped for
+a per-block local sub-grid.
 
-Isso significa que NENHUMA linha de FloodModel (ou de qualquer outro
-SyncRasterModel) precisa mudar — apenas a ordem de herança na
-declaração da classe:
+This means NOT A SINGLE LINE of the model (FloodModel or any other
+SyncRasterModel) has to change — only the inheritance order in the
+class declaration:
 
     class FloodModelHalo(HaloChunkedSyncRasterModel, FloodModel):
         pass
 
-A ordem importa (MRO): o mixin deve vir primeiro, para que seu
-execute()/setup() seja chamado antes, com super() delegando para a
-lógica real de FloodModel.execute()/setup().
+The order matters (MRO): the mixin must come first, so its
+execute()/setup() runs first, with super() delegating to the real
+FloodModel.execute()/setup().
 
-Limitação conhecida: pre_execute()/post_execute() de SyncRasterModel
-(que fazem o snapshot "<name>_past") NÃO são interceptados por este
-mixin — continuam operando sobre o backend global real, fora do loop
-de blocos. Isso é intencional: sincronizar "_past" é uma cópia simples
-de array inteiro, sem dependência de vizinhança, então não precisa de
-decomposição de domínio. O halo só é necessário dentro de execute(),
-onde há leitura de vizinhos via self.shift.
+Known limitation: SyncRasterModel's pre_execute()/post_execute() (which
+take the "<name>_past" snapshot) are NOT intercepted by this mixin —
+they keep operating on the real global backend, outside the block loop.
+This is intentional: synchronizing "_past" is a plain whole-array copy
+with no neighbourhood dependency, so it needs no domain decomposition.
+The halo is only needed inside execute(), where neighbours are read
+through self.shift.
 """
 
 from __future__ import annotations
@@ -44,35 +45,35 @@ from ..engine import make_blocks, resolve_boundary_value
 
 class HaloChunkedSyncRasterModel:
     """
-    Mixin que processa execute() de um RasterModel/SyncRasterModel em
-    blocos com halo, delegando a lógica científica para a próxima
-    classe na MRO via super().
+    Mixin that runs a RasterModel/SyncRasterModel's execute() in blocks
+    with a halo, delegating the scientific logic to the next class in
+    the MRO through super().
 
-    Parameters (setup, além dos que a subclasse concreta já aceita)
-    ------------------------------------------------------------------
+    Parameters (setup, on top of those the concrete subclass accepts)
+    -----------------------------------------------------------------
     block_h, block_w : int
-        Dimensões do bloco de processamento.
+        Processing block size.
     halo : int, optional
-        Raio da vizinhança usado pela regra (default 1).
+        Neighbourhood radius used by the rule (default 1).
 
-        ATENÇÃO — halo NÃO é sempre igual ao raio nominal do shift
-        usado pela regra. Se a regra computa uma quantidade DERIVADA
-        de vizinhos (ex.: um "fluxo" que depende de quantos vizinhos
-        satisfazem uma condição) e depois lê essa quantidade derivada
-        DE UM VIZINHO (não do próprio valor bruto), a dependência real
-        é de 2 saltos, não 1 — halo=1 fica sutilmente errado perto de
-        fronteiras internas de bloco (não nas bordas do domínio, que
-        já são tratadas por boundary_value). Achado documentado em
-        tests/test_flood_model_halo_depth_regression.py: o FloodModel
-        do BR-MANGUE precisa de halo=2 por esse motivo exato
-        (fluxo_viz depende de viz_baixos do vizinho, que depende dos
-        vizinhos do vizinho). Ao adaptar uma regra nova, se os testes
-        de equivalência passarem com dado sintético simples mas
-        falharem em dado real/irregular, suspeite de dependência de
-        2+ saltos antes de suspeitar de outra coisa.
+        WARNING — halo is NOT always equal to the nominal shift radius
+        the rule uses. If the rule computes a quantity DERIVED from
+        neighbours (e.g. a "flow" that depends on how many neighbours
+        satisfy a condition) and then reads that derived quantity FROM A
+        NEIGHBOUR (not its own raw value), the real dependency is 2 hops,
+        not 1 — halo=1 is then subtly wrong near internal block
+        boundaries (not at the domain edges, which boundary_value already
+        handles). Documented in the README ("the correct halo depth is
+        the dependency chain's depth"): the BR-MANGUE FloodModel needs
+        halo=2 for exactly this reason (its neighbour flow depends on the
+        neighbour's count of lower cells, which depends on the
+        neighbour's neighbours). When adapting a new rule, if the
+        equivalence tests pass on simple synthetic data but fail on
+        real/irregular data, suspect a 2+ hop dependency before anything
+        else.
     boundary_value : float, optional
-        Valor de preenchimento do halo global nas bordas externas da
-        grade. Default 0.
+        Fill value of the global halo at the grid's outer edges.
+        Default 0.
     """
 
     def setup(self, backend: RasterBackend, block_h: int, block_w: int,
@@ -81,7 +82,7 @@ class HaloChunkedSyncRasterModel:
         self.block_w = block_w
         self.halo = halo
         self.boundary_value = boundary_value
-        super().setup(backend=backend, **kwargs)  # delega para a subclasse real
+        super().setup(backend=backend, **kwargs)  # delegate to the real subclass
 
     def execute(self) -> None:
         real_backend = self.backend
@@ -89,8 +90,8 @@ class HaloChunkedSyncRasterModel:
         height, width = real_backend.shape
         h = self.halo
 
-        # Todos os arrays estáticos (2D) do backend global, sem distinção
-        # de nome — genérico o suficiente para qualquer modelo concreto.
+        # Every static (2-D) array of the global backend, whatever its
+        # name — generic enough for any concrete model.
         static_names = [n for n, a in real_backend.arrays.items() if a.ndim == 2]
         padded = {
             n: np.pad(real_backend.arrays[n], h, mode="constant",
@@ -107,22 +108,22 @@ class HaloChunkedSyncRasterModel:
                 sub = arr[block.r0: block.r1 + 2 * h, block.c0: block.c1 + 2 * h]
                 block_backend.set(name, sub)
 
-            # Troca temporária: garante que self.shape e self.backend
-            # (usados diretamente dentro de execute() da subclasse real,
-            # ex. `rows, cols = self.shape` no FloodModel) reflitam a
-            # forma local do bloco, não a forma global.
+            # Temporary swap: makes self.shape and self.backend (used
+            # directly inside the real subclass's execute(), e.g.
+            # `rows, cols = self.shape`) reflect the block's local shape,
+            # not the global one.
             self.backend = block_backend
             self.shape = block_backend.shape
             try:
-                super().execute()  # lógica real (ex.: FloodModel.execute)
+                super().execute()  # the real logic (e.g. FloodModel.execute)
             finally:
                 self.backend = real_backend
                 self.shape = real_shape
 
-            # Reconcilia: recorta o halo e escreve na grade global nova.
-            # Arrays "<name>_past" são ignorados aqui — são geridos pelo
-            # synchronize() global em pre_execute()/post_execute(), não
-            # devem ser sobrescritos com fatias locais com halo.
+            # Reconcile: crop the halo and write into the new global grid.
+            # "<name>_past" arrays are skipped here — they are managed by
+            # the global synchronize() in pre_execute()/post_execute() and
+            # must not be overwritten with local slices that carry a halo.
             for name, arr in block_backend.arrays.items():
                 if name.endswith("_past"):
                     continue

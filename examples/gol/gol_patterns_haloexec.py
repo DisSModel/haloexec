@@ -1,23 +1,23 @@
 """
-Game of Life com padrões clássicos + haloexec + RasterMap
-============================================================
-Posiciona padrões conhecidos (glider, blinker, beacon, toad, block,
-pulsar) DELIBERADAMENTE sobre as fronteiras de bloco, para que seja
-fácil verificar visualmente se o halo está sincronizando corretamente
-(um padrão que atravessa a borda de um bloco e continua se comportando
-como deveria é a evidência visual mais direta).
+Game of Life with classic patterns + haloexec + RasterMap
+=========================================================
+Places well-known patterns (glider, blinker, beacon, toad, block,
+pulsar) DELIBERATELY over block boundaries, so it is easy to check
+visually whether the halo synchronizes correctly (a pattern that
+crosses a block edge and keeps behaving as it should is the most direct
+visual evidence).
 
-Requisitos
-----------
+Requirements
+------------
     pip install dissmodel
-    pip install -e /caminho/para/dissmodel-ca
-    pip install -e /caminho/para/haloexec
+    pip install -e /path/to/dissmodel-ca
+    pip install -e /path/to/haloexec
 
-Uso
----
-    python gol_patterns_haloexec.py
+Usage
+-----
+    python examples/gol/gol_patterns_haloexec.py
 
-Sem display interativo, os PNGs caem em ./raster_map_frames/.
+Without an interactive display, the PNGs go to ./raster_map_frames/.
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from haloexec import HaloChunkedRasterCellularAutomaton
 
 
 # ---------------------------------------------------------------------------
-# Modelo: GameOfLife com halo
+# Model: GameOfLife with a halo
 # ---------------------------------------------------------------------------
 class GameOfLifeHalo(HaloChunkedRasterCellularAutomaton):
     def setup(
@@ -59,7 +59,7 @@ class GameOfLifeHalo(HaloChunkedRasterCellularAutomaton):
 
 
 def place(grid: np.ndarray, pattern: list[list[int]], top: int, left: int) -> None:
-    """Escreve um padrão na grade a partir de (top, left)."""
+    """Write a pattern into the grid starting at (top, left)."""
     arr = np.array(pattern)
     h, w = arr.shape
     grid[top:top + h, left:left + w] = arr
@@ -75,19 +75,19 @@ GENERATIONS = 16
 
 grid = np.zeros((ROWS, COLS), dtype=np.int8)
 
-# Posicionados DE PROPÓSITO sobre fronteiras de bloco (múltiplos de 10)
-# — o pior caso para testar a sincronização do halo.
-# CORRIGIDO: beacon movido de col 25 -> col 33 (na versão original,
-# beacon em (9,25) 4x4 colidia com pulsar em (4,20) 13x13 -- a área
-# do beacon [9:13, 25:29] cai inteira dentro da área do pulsar
-# [4:17, 20:33]. place() sobrescreve por atribuição direta, então os
-# dois padrões ficariam corrompidos silenciosamente, sem erro nenhum.
-place(grid, PATTERNS["glider"], 8, 8)     # atravessa o cruzamento (10,10) na diagonal
-place(grid, PATTERNS["blinker"], 20, 5)   # atravessa a borda horizontal em r=20
-place(grid, PATTERNS["beacon"], 9, 33)    # atravessa a borda horizontal em r=10
-place(grid, PATTERNS["toad"], 29, 15)     # atravessa a borda horizontal em r=30
-place(grid, PATTERNS["block"], 19, 19)    # atravessa o cruzamento de 4 blocos (10,20)+(10,20)
-place(grid, PATTERNS["pulsar"], 4, 20)    # oscilador maior, período 3
+# Placed ON PURPOSE over block boundaries (multiples of 10)
+# — the worst case for testing halo synchronization.
+# FIXED: beacon moved from col 25 -> col 33 (in the original version,
+# the 4x4 beacon at (9,25) collided with the 13x13 pulsar at (4,20) --
+# the beacon's area [9:13, 25:29] falls entirely inside the pulsar's
+# area [4:17, 20:33]. place() overwrites by direct assignment, so both
+# patterns would have been silently corrupted, with no error at all.
+place(grid, PATTERNS["glider"], 8, 8)     # crosses the (10,10) corner diagonally
+place(grid, PATTERNS["blinker"], 20, 5)   # crosses the horizontal edge at r=20
+place(grid, PATTERNS["beacon"], 9, 33)    # crosses the horizontal edge at r=10
+place(grid, PATTERNS["toad"], 29, 15)     # crosses the horizontal edge at r=30
+place(grid, PATTERNS["block"], 19, 19)    # sits on the corner where 4 blocks meet (20,20)
+place(grid, PATTERNS["pulsar"], 4, 20)    # larger oscillator, period 3
 
 backend = raster_grid(rows=ROWS, cols=COLS, attrs={"state": grid})
 
@@ -101,14 +101,14 @@ gol = GameOfLifeHalo(
 )
 
 # ---------------------------------------------------------------------------
-# Visualização
+# Visualization
 # ---------------------------------------------------------------------------
 RasterMap(
     backend=backend,
     band="state",
     color_map={0: "#ffffff", 1: "#2f8f6e"},
-    labels={0: "morta", 1: "viva"},
-    title=f"Padrões clássicos sobre fronteiras de bloco (halo={HALO})",
+    labels={0: "dead", 1: "alive"},
+    title=f"Classic patterns over block boundaries (halo={HALO})",
 )
 
 # ---------------------------------------------------------------------------
