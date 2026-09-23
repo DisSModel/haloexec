@@ -1,11 +1,11 @@
 """
-Prova de equivalência do MemmapRasterWorkspace: execução em blocos+halo
-lidos do DISCO (memmap, double-buffer, sem materializar a grade
-inteira em memória) deve ser idêntica à execução monolítica em RAM.
+Equivalence proof for MemmapRasterWorkspace: running in blocks+halo read
+from DISK (memmap, double buffer, never materializing the whole grid in
+memory) must match the monolithic in-RAM run exactly.
 
-Este teste é deliberadamente independente de dissmodel — o workspace
-em disco é genérico o suficiente para ser usado por qualquer framework
-ou script solto, não só modelos dissmodel.
+This test is deliberately independent of dissmodel — the on-disk
+workspace is generic enough for any framework or standalone script, not
+only dissmodel models.
 """
 
 from pathlib import Path
@@ -46,7 +46,7 @@ def _run_disk_backed(tmp_path: Path, initial: np.ndarray, generations: int,
         block_h=block_h, block_w=block_w, halo=halo,
     )
     ws.fill("state", initial)
-    ws.fill("state", initial, slot="b")  # ambos os slots começam iguais
+    ws.fill("state", initial, slot="b")  # both slots start equal
 
     for step in range(generations):
         for block in ws.blocks():

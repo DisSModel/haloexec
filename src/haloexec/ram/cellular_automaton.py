@@ -1,37 +1,35 @@
 """
-Integração com dissmodel: HaloChunkedRasterCellularAutomaton.
+dissmodel integration: HaloChunkedRasterCellularAutomaton.
 
-Estende dissmodel.geo.raster.cellular_automaton.RasterCellularAutomaton
-para executar rule() em blocos com halo, em vez de sobre a grade
-inteira de uma vez.
+Extends dissmodel.geo.raster.cellular_automaton.RasterCellularAutomaton
+to run rule() in blocks with a halo, instead of over the whole grid at
+once.
 
-Ponto central de design: mantém o MESMO contrato de rule() da classe
-base (`rule(arrays: dict[str, np.ndarray]) -> dict[str, np.ndarray]`).
-Isso significa que qualquer RasterCellularAutomaton já escrito para
-dissmodel roda em blocos+halo apenas trocando a classe base — nenhuma
-mudança na lógica da regra é necessária. É essa propriedade que torna
-a migração futura do BR-MANGUE (`chunked_engine.py`) para este motor
-uma troca estrutural, não uma reescrita.
+Central design point: it keeps the SAME rule() contract as the base
+class (`rule(arrays: dict[str, np.ndarray]) -> dict[str, np.ndarray]`).
+Any RasterCellularAutomaton already written for dissmodel therefore
+runs in blocks+halo just by swapping the base class — no change to the
+rule's logic is needed. This property is what makes moving an existing
+model onto this engine a structural swap, not a rewrite.
 
-Como funciona
--------------
-1. Tira um snapshot da grade global (equivalente a `self.backend.past`).
-2. Preenche halo global (`np.pad`) em cada array.
-3. Para cada bloco, monta um RasterBackend temporário só com a
-   sub-grade + halo daquele bloco, e troca `self.backend` para ele.
-   Isso é o que garante que chamadas internas da regra como
-   `self.backend.focal_sum_mask(...)` operem sobre a forma local
-   correta (RasterBackend.focal_sum_mask usa `self.shape` do backend
-   ativo) em vez da forma global.
-4. Chama `self.rule(block_backend.snapshot())` — mesma assinatura de
-   sempre.
-5. Recorta o halo do resultado (mantém só a região "core") e escreve
-   na posição correspondente da grade global nova.
-6. Restaura `self.backend` para o backend global real e aplica as
-   atualizações.
+How it works
+------------
+1. Take a snapshot of the global grid (equivalent to `self.backend.past`).
+2. Pad each array with the global halo (`np.pad`).
+3. For each block, build a temporary RasterBackend holding only that
+   block's sub-grid + halo, and point `self.backend` at it. This is
+   what makes calls inside the rule such as
+   `self.backend.focal_sum_mask(...)` operate on the correct local
+   shape (RasterBackend.focal_sum_mask uses the active backend's
+   `self.shape`) instead of the global one.
+4. Call `self.rule(block_backend.snapshot())` — the usual signature.
+5. Crop the halo from the result (keep only the "core" region) and
+   write it at the matching position of the new global grid.
+6. Restore `self.backend` to the real global backend and apply the
+   updates.
 
-Fundamentação teórica: Kjolstad & Snir (2010), Ghost Cell Pattern
-(ParaPLoP); Xia et al. (2025), ISPRS IJGI 14(3):109 — ver README.md.
+Theoretical basis: Kjolstad & Snir (2010), Ghost Cell Pattern
+(ParaPLoP); Xia et al. (2025), ISPRS IJGI 14(3):109 — see README.md.
 """
 
 from __future__ import annotations
@@ -45,12 +43,12 @@ from ..engine import Block, make_blocks, resolve_boundary_value
 
 class HaloChunkedRasterCellularAutomaton(RasterCellularAutomaton):
     """
-    RasterCellularAutomaton que processa a grade em blocos com halo,
-    em vez de de uma vez só.
+    RasterCellularAutomaton that processes the grid in blocks with a
+    halo, instead of all at once.
 
-    Uso: qualquer subclasse existente de RasterCellularAutomaton pode
-    trocar a herança para esta classe e ganhar decomposição de domínio
-    sem alterar `rule()`.
+    Usage: any existing RasterCellularAutomaton subclass can switch its
+    base class to this one and gain domain decomposition without
+    changing `rule()`.
 
     Examples
     --------
@@ -81,18 +79,18 @@ class HaloChunkedRasterCellularAutomaton(RasterCellularAutomaton):
         Parameters
         ----------
         backend : RasterBackend
-            Backend global compartilhado (mesma semântica da classe base).
+            Shared global backend (same semantics as the base class).
         block_h, block_w : int
-            Dimensões do bloco de processamento.
+            Processing block size.
         halo : int, optional
-            Raio da vizinhança da regra. Deve ser >= alcance máximo de
-            dependência espacial de um passo de tempo. Default 1
-            (Moore/Von Neumann de vizinho imediato).
+            The rule's neighbourhood radius. Must be >= the maximum
+            spatial dependency reach of one time step. Default 1
+            (immediate Moore/Von Neumann neighbours).
         boundary_value : float, optional
-            Valor de preenchimento do halo global nas bordas externas
-            da grade (fora do domínio simulado). Default 0.
+            Fill value of the global halo at the grid's outer edges
+            (outside the simulated domain). Default 0.
         state_attr : str, optional
-            Ver classe base.
+            See the base class.
         """
         super().setup(backend=backend, state_attr=state_attr)
         self.block_h = block_h
@@ -101,7 +99,7 @@ class HaloChunkedRasterCellularAutomaton(RasterCellularAutomaton):
         self.boundary_value = boundary_value
 
     def _block_backend(self, padded: dict[str, np.ndarray], block: Block) -> RasterBackend:
-        """Monta um RasterBackend temporário com a sub-grade+halo do bloco."""
+        """Build a temporary RasterBackend with the block's sub-grid + halo."""
         h = self.halo
         block_shape = (block.r1 - block.r0 + 2 * h, block.c1 - block.c0 + 2 * h)
         temp = RasterBackend(shape=block_shape)
@@ -112,11 +110,11 @@ class HaloChunkedRasterCellularAutomaton(RasterCellularAutomaton):
 
     def execute(self) -> None:
         """
-        Executa um passo de tempo processando a grade em blocos+halo.
+        Run one time step, processing the grid in blocks+halo.
 
-        Substitui o execute() da classe base (que chama rule() uma vez
-        sobre a grade inteira) por um loop de blocos, preservando o
-        mesmo contrato de rule() para quem escreve a regra.
+        Replaces the base class's execute() (which calls rule() once over
+        the whole grid) with a block loop, keeping the same rule()
+        contract for whoever writes the rule.
         """
         real_backend = self.backend
         height, width = real_backend.shape
@@ -127,7 +125,7 @@ class HaloChunkedRasterCellularAutomaton(RasterCellularAutomaton):
             name: np.pad(arr, h, mode="constant",
                          constant_values=resolve_boundary_value(self.boundary_value, name))
             for name, arr in global_snapshot.items()
-            if arr.ndim == 2  # arrays temporais (time, y, x) não são suportados aqui
+            if arr.ndim == 2  # temporal (time, y, x) arrays are not supported here
         }
 
         new_arrays: dict[str, np.ndarray] = {
@@ -137,9 +135,9 @@ class HaloChunkedRasterCellularAutomaton(RasterCellularAutomaton):
         for block in make_blocks(height, width, self.block_h, self.block_w):
             block_backend = self._block_backend(padded, block)
 
-            # Troca temporária: garante que chamadas como
-            # self.backend.focal_sum_mask(...) dentro de rule() operem
-            # sobre a forma local do bloco, não a forma global.
+            # Temporary swap: makes calls such as
+            # self.backend.focal_sum_mask(...) inside rule() operate on
+            # the block's local shape, not the global one.
             self.backend = block_backend
             try:
                 updates = self.rule(block_backend.snapshot())

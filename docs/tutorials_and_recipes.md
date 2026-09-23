@@ -72,9 +72,9 @@ from dissmodel.core import Environment
 from dissmodel.geo.raster.cellular_automaton import RasterCellularAutomaton
 from haloexec import MemmapRasterWorkspace, DiskChunkedRasterCellularAutomaton
 
-# Mixin cooperativo: precisa de RasterCellularAutomaton como segunda
-# base (MRO) — herança simples aqui falha em runtime (setup() não tem
-# para onde delegar via super()).
+# Cooperative mixin: needs RasterCellularAutomaton as the second base
+# (MRO) — single inheritance here fails at runtime (setup() has nowhere
+# to delegate through super()).
 class MassiveGameOfLife(DiskChunkedRasterCellularAutomaton, RasterCellularAutomaton):
     def rule(self, arrays: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         state = arrays["state"]

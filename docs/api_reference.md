@@ -41,7 +41,7 @@ This document provides a comprehensive, exhaustive reference for all public clas
 
 ## `haloexec.engine`
 
-Primitivas de decomposição de domínio sem dependências externas.
+Domain decomposition primitives with no external dependencies.
 
 ### `Block`
 ```python
@@ -94,7 +94,7 @@ Resolves the external ghost cell fill value for a given array.
 
 ## `haloexec.disk.workspace`
 
-Gerenciador de arrays bidimensionais em disco baseados em `np.memmap` com suporte a double-buffering e checkpoints.
+Manager of two-dimensional on-disk arrays based on `np.memmap`, with double-buffering and checkpoints.
 
 ### `HaloWindow`
 ```python

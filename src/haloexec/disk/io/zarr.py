@@ -1,28 +1,28 @@
 """
-Carrega arrays de um Zarr store direto para MemmapRasterWorkspace,
-bloco a bloco — segunda opção de entrada de dados, ao lado de
-geotiff_io.py (TIFF/VRT).
+Load arrays from a Zarr store directly into a MemmapRasterWorkspace,
+block by block — the second data-input path, next to geotiff.py
+(GeoTIFF/VRT).
 
-Motivação: o disscube (DisSModel/disscube) armazena variáveis
-derivadas nativamente em Zarr (`data/derived/{grid_id}/{tile_id}/
-{spec_hash}/{variable_name}.zarr`), já alinhadas à grade mestra pelo
-seu GridAligner (com resampling por-operador e alinhamento fino para
-categóricas — ver README). Este módulo permite consumir esse dado
-direto, sem precisar materializar para GeoTIFF primeiro.
+Motivation: disscube (DisSModel/disscube) stores derived variables
+natively in Zarr (`data/derived/{grid_id}/{tile_id}/{spec_hash}/
+{variable_name}.zarr`), already aligned to the master grid by its
+GridAligner (per-operator resampling and fine alignment for categorical
+data — see its README). This module consumes that data directly,
+without materializing it to GeoTIFF first.
 
-Por que um módulo separado de geotiff_io.py
----------------------------------------------
-Zarr já é nativamente chunked — não precisa de rasterio.windows.Window
-nem de VRT para leitura parcial; um zarr.Array suporta slicing direto
-(`arr[r0:r1, c0:c1]`) que só lê os chunks necessários do store. A API
-pública espelha geotiff_io.py (mesma forma de declarar quais arrays do
-workspace vêm de qual variável de origem), para que os dois caminhos
-de entrada (GeoTIFF/VRT e Zarr) sejam intercambiáveis do ponto de
-vista de quem usa MemmapRasterWorkspace — troca-se o loader, o resto
-do pipeline (halo, disco, modelos) não muda.
+Why a module separate from geotiff.py
+-------------------------------------
+Zarr is natively chunked — it needs neither rasterio.windows.Window
+nor a VRT for partial reads; a zarr.Array supports direct slicing
+(`arr[r0:r1, c0:c1]`) that reads only the chunks it needs from the
+store. The public API mirrors geotiff.py (same way of declaring which
+workspace arrays come from which source variable), so the two input
+paths (GeoTIFF/VRT and Zarr) are interchangeable for code that uses
+MemmapRasterWorkspace — swap the loader, and the rest of the pipeline
+(halo, disk, models) stays the same.
 
-Requer o extra opcional "zarr" (zarr>=2.16). xarray/rioxarray NÃO são
-necessários aqui — lê-se o zarr.Array bruto por nome de variável.
+Requires the optional "zarr" extra (zarr>=3). xarray/rioxarray are NOT
+needed here — the raw zarr.Array is read by variable name.
 """
 
 from __future__ import annotations
@@ -41,26 +41,25 @@ from ..workspace import MemmapRasterWorkspace
 
 
 def _resolve_axis_order(arr, expected_names: tuple[str, ...]) -> tuple[int, ...] | None:
-    """Usa arr.metadata.dimension_names (campo nativo do Zarr v3, o
-    mesmo que xarray grava ao salvar um DataArray via to_zarr) para
-    determinar a ordem real dos eixos no array em disco, e devolve os
-    índices de transposição necessários para chegar em expected_names.
+    """Use arr.metadata.dimension_names (the native Zarr v3 field, the
+    same one xarray writes when saving a DataArray with to_zarr) to find
+    the actual axis order of the array on disk, and return the transpose
+    indices that bring it to expected_names.
 
-    Por que isso é necessário: xarray/disscube NÃO garantem que a
-    ordem de eixos gravada em disco seja (y, x) — o próprio
-    CubeClient.load() do disscube faz `.transpose("y", "x")`
-    defensivamente antes de usar qualquer array, precisamente porque
-    a ordem pode vir diferente. Um array QUADRADO com eixos trocados
-    tem o MESMO shape nos dois casos — a checagem de shape sozinha
-    não detecta a troca; é silenciosa, não trava.
+    Why this is needed: xarray/disscube do NOT guarantee that the axis
+    order written to disk is (y, x) — disscube's own CubeClient.load()
+    calls `.transpose("y", "x")` defensively before using any array,
+    precisely because the order may differ. A SQUARE array with swapped
+    axes has the SAME shape either way — a shape check alone does not
+    catch the swap; it is silent, nothing fails.
 
-    No Zarr v2 (zarr-python 2.x, o único disponível em Python 3.10)
-    não existe dimension_names: o xarray grava os nomes no atributo
-    `_ARRAY_DIMENSIONS`, que é lido como fallback.
+    Zarr v2-format arrays have no dimension_names: xarray stores the
+    names in the `_ARRAY_DIMENSIONS` attribute, which is read as a
+    fallback.
 
-    Retorna None se nenhum dos dois estiver disponível (Zarr sem
-    metadado de dimensão — não há como verificar, assume-se a ordem
-    como está, mesmo comportamento de antes desta correção).
+    Returns None if neither is available (a Zarr store without dimension
+    metadata — there is nothing to check against, so the order is taken
+    as it is).
     """
     dims = getattr(getattr(arr, "metadata", None), "dimension_names", None)
     if not dims:
@@ -70,23 +69,23 @@ def _resolve_axis_order(arr, expected_names: tuple[str, ...]) -> tuple[int, ...]
         return None
     dims = tuple(dims)
     if set(dims) != set(expected_names):
-        return None  # nomes de dimensão inesperados -- não arrisca reordenar
+        return None  # unexpected dimension names -- do not risk reordering
     return tuple(dims.index(name) for name in expected_names)
 
 
 def _open_variable(store: str, variable_name: str | None):
-    """Abre um zarr store, que pode ser um grupo (com várias variáveis,
-    acessadas por nome) ou um array único (variável direta)."""
+    """Open a Zarr store, which may be a group (several variables,
+    accessed by name) or a single array (the variable itself)."""
     opened = zarr.open(store, mode="r")
     if hasattr(opened, "arrays") or hasattr(opened, "array_keys"):
-        # É um grupo (zarr.Group) — precisa do nome da variável dentro dele.
+        # A group (zarr.Group) — needs the name of the variable inside it.
         if variable_name is None:
             raise ValueError(
-                f"'{store}' é um grupo Zarr com múltiplas variáveis — "
-                f"informe o nome da variável em variable_map."
+                f"'{store}' is a Zarr group with several variables — "
+                f"give the variable name in variable_map."
             )
         return opened[variable_name]
-    # É um array único — variable_name é ignorado (ou usado só como rótulo).
+    # A single array — variable_name is ignored (or used only as a label).
     return opened
 
 
@@ -97,33 +96,33 @@ def load_zarr_into_workspace(
     time_index: int | None = None,
 ) -> None:
     """
-    Popula um MemmapRasterWorkspace bloco a bloco a partir de um Zarr
-    store, lendo apenas a fatia de cada bloco por vez.
+    Fill a MemmapRasterWorkspace block by block from a Zarr store,
+    reading only one block's slice at a time.
 
     Parameters
     ----------
     store : str | Path
-        Caminho do Zarr store — pode ser um grupo (múltiplas variáveis,
-        acessadas por nome) ou um array único.
-    variable_map : dict[nome_array_workspace, nome_variavel_zarr], optional
-        Mapeia nomes de array do workspace para nomes de variável
-        dentro do grupo zarr. Se None, assume que os nomes já batem
-        (mesmo nome no workspace e no zarr), e que `store` é um único
-        array (não um grupo) se nenhuma variável for nomeada.
+        Path to the Zarr store — either a group (several variables,
+        accessed by name) or a single array.
+    variable_map : dict[workspace_array_name, zarr_variable_name], optional
+        Maps workspace array names to variable names inside the Zarr
+        group. If None, the names are assumed to match (same name in the
+        workspace and in the store), and `store` is taken as a single
+        array (not a group) when no variable is named.
     time_index : int, optional
-        Se a variável tiver uma dimensão temporal inicial (shape
-        (time, y, x), padrão do "Temporal Backend" do disscube para
-        produtos derivados com janela de validade), qual índice de
-        tempo carregar. Obrigatório se a variável for 3D.
+        If the variable has a leading time dimension (shape
+        (time, y, x), the layout of disscube's "Temporal Backend" for
+        derived products with a validity window), which time index to
+        load. Required when the variable is 3-D.
 
     Raises
     ------
     ValueError
-        Se o shape (y, x) da variável não bater com workspace.shape,
-        ou se uma variável 3D for informada sem time_index.
+        If the variable's (y, x) shape does not match workspace.shape,
+        or if a 3-D variable is given without time_index.
     """
     if not HAS_ZARR:
-        raise ImportError("zarr é necessário — pip install -e '.[zarr]'")
+        raise ImportError("zarr is required — pip install -e '.[zarr]'")
 
     store = str(store)
     declared = set(workspace.metadata["arrays"])
@@ -138,23 +137,22 @@ def load_zarr_into_workspace(
         if arr.ndim == 3:
             if time_index is None:
                 raise ValueError(
-                    f"Variável '{zarr_var_name}' tem 3 dimensões (provável "
-                    f"dimensão temporal) — informe time_index."
+                    f"Variable '{zarr_var_name}' has 3 dimensions (probably "
+                    f"a time dimension) — give time_index."
                 )
             expected_dims = ("time", "y", "x")
         elif arr.ndim == 2:
             expected_dims = ("y", "x")
         else:
             raise ValueError(
-                f"Variável '{zarr_var_name}' tem {arr.ndim} dimensões; esperado 2 ou 3."
+                f"Variable '{zarr_var_name}' has {arr.ndim} dimensions; expected 2 or 3."
             )
 
-        # Normaliza a ordem de eixos para (y, x) ou (time, y, x) usando
-        # o metadado nativo de dimensão do Zarr v3, quando disponível.
-        # Necessário porque a ordem de eixos gravada NÃO é garantida
-        # (ver docstring de _resolve_axis_order) — um array quadrado
-        # com eixos trocados tem o mesmo shape nos dois casos, então a
-        # checagem de shape sozinha não pega a inversão.
+        # Normalize the axis order to (y, x) or (time, y, x) using the
+        # store's dimension metadata, when available. Needed because the
+        # written axis order is NOT guaranteed (see the docstring of
+        # _resolve_axis_order) — a square array with swapped axes has the
+        # same shape either way, so a shape check alone misses the swap.
         axis_order = _resolve_axis_order(arr, expected_dims)
 
         shape2d = arr.shape[1:] if arr.ndim == 3 else arr.shape
@@ -164,8 +162,8 @@ def load_zarr_into_workspace(
 
         if shape2d != tuple(workspace.shape):
             raise ValueError(
-                f"Shape de '{zarr_var_name}' {shape2d} não bate com o "
-                f"shape do workspace {tuple(workspace.shape)}."
+                f"Shape of '{zarr_var_name}' {shape2d} does not match the "
+                f"workspace shape {tuple(workspace.shape)}."
             )
 
         for block in workspace.blocks():
@@ -188,9 +186,9 @@ def load_zarr_into_workspace(
             raw = np.asarray(arr[tuple(disk_index)])
 
             if axis_order is not None and raw.ndim == 2:
-                # raw ainda está na ordem relativa em disco (menos o
-                # eixo de tempo, já reduzido pela indexação inteira
-                # acima) -- transpõe para (y, x) canônico.
+                # raw is still in the on-disk relative order (minus the
+                # time axis, already dropped by the integer indexing
+                # above) -- transpose to canonical (y, x).
                 def _shift(pos, time_disk_axis=time_disk_axis):
                     return pos - 1 if (time_disk_axis is not None and time_disk_axis < pos) else pos
                 data = np.transpose(raw, (_shift(y_disk_axis), _shift(x_disk_axis)))
@@ -210,120 +208,120 @@ def load_zarr_tiles_into_workspace(
     skip_empty_blocks: bool = False,
 ) -> None:
     """
-    Popula UM array do workspace a partir de N stores Zarr posicionados
-    lado a lado — o caso multi-tile, que `load_zarr_into_workspace` não
-    cobre (ela recebe um store e exige que ele tenha o shape do workspace
-    inteiro).
+    Fill ONE workspace array from N Zarr stores placed side by side —
+    the multi-tile case, which `load_zarr_into_workspace` does not cover
+    (it takes one store and requires it to have the whole workspace
+    shape).
 
-    Está para o Zarr como o VRT do geomosaic está para o GeoTIFF: junta
-    pedaços numa grade contínua. A diferença é que não existe formato de
-    mosaico para Zarr, então a costura acontece aqui, na leitura.
+    It is to Zarr what geomosaic's VRT is to GeoTIFF: it joins pieces
+    into one continuous grid. The difference is that Zarr has no mosaic
+    format, so the stitching happens here, at read time.
 
     Parameters
     ----------
     tiles : list[dict]
-        Um dicionário por pedaço, com as chaves:
+        One dictionary per piece, with the keys:
 
-        - ``url``      — caminho do store Zarr
-        - ``variable`` — nome da variável dentro do store
-        - ``row_off``  — linha, em pixel, onde o pedaço começa no workspace
-        - ``col_off``  — coluna, em pixel
-        - ``height``   — altura do pedaço, em pixel
-        - ``width``    — largura do pedaço, em pixel
+        - ``url``      — path of the Zarr store
+        - ``variable`` — name of the variable inside the store
+        - ``row_off``  — row, in pixels, where the piece starts in the workspace
+        - ``col_off``  — column, in pixels
+        - ``height``   — piece height, in pixels
+        - ``width``    — piece width, in pixels
 
-        É exatamente o formato que ``CubeClient.tile_layout()`` do
-        disscube devolve, mas nada aqui depende do disscube: qualquer
-        origem que saiba dizer caminho e posição serve. Chaves extras são
-        ignoradas.
+        This is exactly the format returned by disscube's
+        ``CubeClient.tile_layout()``, but nothing here depends on
+        disscube: any source that can give a path and a position works.
+        Extra keys are ignored.
     array : str, optional
-        Nome do array NO WORKSPACE a preencher. Se None, usa o
-        ``variable`` do primeiro tile — útil quando os nomes coincidem.
+        Name of the WORKSPACE array to fill. If None, the ``variable`` of
+        the first tile is used — handy when the names match.
     fill : float, optional
-        Valor para as células que nenhum tile cobre (buracos da malha,
-        cantos fora da área de estudo). Se None, usa NaN para arrays de
-        ponto flutuante e 0 para inteiros.
+        Value for cells no tile covers (holes in the tiling, corners
+        outside the study area). If None, NaN for floating-point arrays
+        and 0 for integer ones.
     skip_empty_blocks : bool
-        Se True, blocos que nenhum tile toca não são escritos. Como os
-        `.dat` do workspace nascem esparsos, isso deixa esses blocos sem
-        ocupar disco — mas eles passam a LER COMO ZERO, não como `fill`.
-        Só use quando 0 não for um valor válido do domínio (ver a nota
-        "Esparsidade e custo de disco" no README). Default False, que
-        escreve `fill` e mantém a distinção ao custo do disco.
+        If True, blocks that no tile touches are not written. Since the
+        workspace `.dat` files start sparse, those blocks then take no
+        disk space — but they READ AS ZERO, not as `fill`. Use only when
+        0 is not a valid value in the domain (see "Sparsity and disk
+        cost" in the README). Default False, which writes `fill` and
+        keeps the distinction at the cost of disk space.
 
     Raises
     ------
     ValueError
-        Se `tiles` estiver vazio, se o array não for declarado no
-        workspace, se algum tile faltar chave obrigatória, ou se um tile
-        cair fora dos limites do workspace — todos casos em que seguir
-        adiante produziria um mosaico silenciosamente errado.
+        If `tiles` is empty, if the array is not declared in the
+        workspace, if a tile lacks a required key, or if a tile falls
+        outside the workspace bounds — every case in which carrying on
+        would produce a silently wrong mosaic.
     ImportError
-        Se o extra "zarr" não estiver instalado.
+        If the "zarr" extra is not installed.
     """
     if not HAS_ZARR:
-        raise ImportError("zarr é necessário — pip install -e '.[zarr]'")
+        raise ImportError("zarr is required — pip install -e '.[zarr]'")
     if not tiles:
-        raise ValueError("A lista de tiles está vazia — nada a carregar.")
+        raise ValueError("The list of tiles is empty — nothing to load.")
 
-    obrigatorias = {"url", "variable", "row_off", "col_off", "height", "width"}
+    required = {"url", "variable", "row_off", "col_off", "height", "width"}
     for i, t in enumerate(tiles):
-        faltando = obrigatorias - set(t)
-        if faltando:
+        missing = required - set(t)
+        if missing:
             raise ValueError(
-                f"tiles[{i}] não tem as chaves {sorted(faltando)}; "
-                f"cada tile precisa de {sorted(obrigatorias)}."
+                f"tiles[{i}] is missing the keys {sorted(missing)}; "
+                f"every tile needs {sorted(required)}."
             )
 
-    # Dois pedaços na mesma posição não é ambiguidade a resolver por ordem:
-    # um sobrescreveria o outro em silêncio. Acontece de verdade quando o
-    # layout mistura fatias temporais da mesma variável — cada ano repete as
-    # mesmas posições.
-    ocupadas: dict[tuple[int, int], str] = {}
+    # Two pieces at the same position are not an ambiguity to resolve by
+    # order: one would silently overwrite the other. It really happens when
+    # the layout mixes time slices of the same variable — each year repeats
+    # the same positions.
+    occupied: dict[tuple[int, int], str] = {}
     for t in tiles:
-        chave = (t["row_off"], t["col_off"])
-        if chave in ocupadas:
+        key = (t["row_off"], t["col_off"])
+        if key in occupied:
             raise ValueError(
-                f"Dois tiles ocupam a posição ({chave[0]}, {chave[1]}): "
-                f"{ocupadas[chave]!r} e {t.get('tile_id')!r}. Um sobrescreveria "
-                f"o outro. Se o layout mistura fatias temporais, escolha uma "
-                f"antes de carregar."
+                f"Two tiles occupy position ({key[0]}, {key[1]}): "
+                f"{occupied[key]!r} and {t.get('tile_id')!r}. One would overwrite "
+                f"the other. If the layout mixes time slices, pick one "
+                f"before loading."
             )
-        ocupadas[chave] = t.get("tile_id")
+        occupied[key] = t.get("tile_id")
 
     array_name = array or tiles[0]["variable"]
-    declarados = set(workspace.metadata["arrays"])
-    if array_name not in declarados:
+    declared = set(workspace.metadata["arrays"])
+    if array_name not in declared:
         raise ValueError(
-            f"O workspace não declara o array {array_name!r} "
-            f"(declarados: {sorted(declarados)})."
+            f"The workspace does not declare the array {array_name!r} "
+            f"(declared: {sorted(declared)})."
         )
 
-    altura, largura = workspace.shape
+    height, width = workspace.shape
     for t in tiles:
         if (t["row_off"] < 0 or t["col_off"] < 0
-                or t["row_off"] + t["height"] > altura
-                or t["col_off"] + t["width"] > largura):
+                or t["row_off"] + t["height"] > height
+                or t["col_off"] + t["width"] > width):
             raise ValueError(
-                f"tile {t.get('tile_id')!r} em "
+                f"tile {t.get('tile_id')!r} at "
                 f"({t['row_off']},{t['col_off']}) {t['height']}x{t['width']} "
-                f"não cabe no workspace {altura}x{largura}."
+                f"does not fit in the workspace {height}x{width}."
             )
 
     dtype = np.dtype(workspace.metadata["arrays"][array_name])
     if fill is None:
         fill = np.nan if np.issubdtype(dtype, np.floating) else 0
 
-    abertos = {}
+    opened = {}
     try:
         for t in tiles:
-            chave = (t["url"], t["variable"])
-            if chave not in abertos:
-                abertos[chave] = _open_variable(t["url"], t["variable"])
+            key = (t["url"], t["variable"])
+            if key not in opened:
+                opened[key] = _open_variable(t["url"], t["variable"])
 
-        # Percorre os BLOCOS do workspace, não os tiles: um bloco pode cair
-        # sobre dois tiles vizinhos, ou sobre um buraco da malha. Montá-lo a
-        # partir de tudo que o cobre é o que faz a costura ficar correta —
-        # escrever tile a tile deixaria as bordas dependendo da ordem.
+        # Iterate over the workspace BLOCKS, not the tiles: a block may span
+        # two neighbouring tiles, or a hole in the tiling. Assembling it from
+        # everything that covers it is what makes the stitching correct —
+        # writing tile by tile would make the edges depend on the order.
         for block in workspace.blocks():
             buf = None
             for t in tiles:
@@ -339,17 +337,17 @@ def load_zarr_tiles_into_workspace(
                         (block.r1 - block.r0, block.c1 - block.c0), fill, dtype=dtype
                     )
 
-                arr = abertos[(t["url"], t["variable"])]
-                ordem = _resolve_axis_order(arr, ("y", "x"))
-                trecho = np.asarray(arr[
+                arr = opened[(t["url"], t["variable"])]
+                order = _resolve_axis_order(arr, ("y", "x"))
+                piece = np.asarray(arr[
                     r0 - t["row_off"]:r1 - t["row_off"],
                     c0 - t["col_off"]:c1 - t["col_off"],
-                ]) if ordem in (None, (0, 1)) else np.asarray(arr[
+                ]) if order in (None, (0, 1)) else np.asarray(arr[
                     c0 - t["col_off"]:c1 - t["col_off"],
                     r0 - t["row_off"]:r1 - t["row_off"],
                 ]).T
 
-                buf[r0 - block.r0:r1 - block.r0, c0 - block.c0:c1 - block.c0] = trecho
+                buf[r0 - block.r0:r1 - block.r0, c0 - block.c0:c1 - block.c0] = piece
 
             if buf is None:
                 if skip_empty_blocks:
@@ -360,6 +358,6 @@ def load_zarr_tiles_into_workspace(
 
             workspace.write_block_to_read_slot(block, array_name, buf)
     finally:
-        abertos.clear()
+        opened.clear()
 
     workspace.flush()

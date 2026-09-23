@@ -1,23 +1,24 @@
 """
-Regressão: load_zarr_into_workspace deve ler corretamente um Zarr cuja
-ordem de eixos em disco NÃO é (y, x) -- cenário real, não hipotético.
+Regression: load_zarr_into_workspace must correctly read a Zarr store
+whose on-disk axis order is NOT (y, x) -- a real scenario, not a
+hypothetical one.
 
-O disscube (VariableWriter) grava via
-`da.to_dataset(name=var_name).to_zarr(...)`, e o próprio CubeClient.load()
-do disscube faz `.transpose("y", "x")` defensivamente antes de usar
-qualquer array carregado -- evidência de que a ordem de eixos em disco
-NÃO é garantida como (y, x).
+disscube (VariableWriter) writes through
+`da.to_dataset(name=var_name).to_zarr(...)`, and disscube's own
+CubeClient.load() calls `.transpose("y", "x")` defensively before using
+any loaded array -- evidence that the on-disk axis order is NOT
+guaranteed to be (y, x).
 
-O perigo: um array QUADRADO com eixos trocados (x, y) em vez de (y, x)
-tem o MESMO shape nos dois casos -- a checagem de shape sozinha não
-detecta a inversão. Sem correção, isso corrompe silenciosamente
-linha/coluna, sem erro nenhum.
+The danger: a SQUARE array with swapped (x, y) axes instead of (y, x)
+has the SAME shape either way -- a shape check alone does not detect
+the swap. Without the fix, rows/columns are silently corrupted, with no
+error at all.
 
-Reproduzido aqui com xarray real, gravando exatamente como o
-VariableWriter do disscube grava (to_dataset().to_zarr()), não com
-zarr.create_array() direto -- para capturar o metadado real de
-dimension_names que o xarray grava (campo nativo do Zarr v3), a
-mesma informação que a correção em zarr_io.py usa para normalizar.
+Reproduced here with real xarray, writing exactly as disscube's
+VariableWriter does (to_dataset().to_zarr()), not with a direct
+zarr.create_array() -- to capture the real dimension_names metadata
+xarray writes (the native Zarr v3 field), the same information the fix
+in disk/io/zarr.py uses to normalize.
 """
 
 import numpy as np
@@ -30,10 +31,10 @@ from haloexec import MemmapRasterWorkspace, load_zarr_into_workspace
 
 
 def _write_like_disscube(path, data_yx: np.ndarray, dims: tuple[str, ...], var_name: str):
-    """Grava exatamente como VariableWriter do disscube:
+    """Write exactly as disscube's VariableWriter does:
     da.to_dataset(name=...).to_zarr(..., mode="w", consolidated=False).
-    `dims` controla a ordem de eixos gravada em disco -- ("y","x") é o
-    caso "correto"/esperado, ("x","y") é o caso perigoso real."""
+    `dims` sets the axis order written to disk -- ("y","x") is the
+    "correct"/expected case, ("x","y") the real dangerous one."""
     if dims == ("y", "x"):
         raw = data_yx
     elif dims == ("x", "y"):
@@ -45,10 +46,10 @@ def _write_like_disscube(path, data_yx: np.ndarray, dims: tuple[str, ...], var_n
 
 
 def test_load_zarr_handles_yx_axis_order(tmp_path):
-    """Caso 'correto' (y, x) -- deve continuar funcionando como sempre."""
+    """The 'correct' (y, x) case -- must keep working as always."""
     n = 6
     data = np.arange(n * n).reshape(n, n).astype("int16")
-    store = tmp_path / "correto.zarr"
+    store = tmp_path / "correct.zarr"
     _write_like_disscube(store, data, ("y", "x"), "uso")
 
     ws = MemmapRasterWorkspace.create(
@@ -61,21 +62,21 @@ def test_load_zarr_handles_yx_axis_order(tmp_path):
 
 
 def test_load_zarr_handles_xy_axis_order_square_array(tmp_path):
-    """Caso PERIGOSO: array QUADRADO gravado com eixos (x, y) --
-    mesmo shape do caso correto, mas dado fisicamente transposto em
-    disco. Sem a correção de dimension_names, isso passaria a checagem
-    de shape e corromperia silenciosamente linha/coluna."""
+    """DANGEROUS case: a SQUARE array written with (x, y) axes -- same
+    shape as the correct case, but the data is physically transposed on
+    disk. Without the dimension_names fix, this would pass the shape
+    check and silently corrupt rows/columns."""
     n = 6
-    # valores distintos por linha E coluna, para que uma transposição
-    # incorreta produza um array MENSURAVELMENTE diferente do original
+    # distinct values per row AND column, so a wrong transposition
+    # produces an array MEASURABLY different from the original
     data = np.arange(n * n).reshape(n, n).astype("int16")
-    store = tmp_path / "perigoso.zarr"
+    store = tmp_path / "swapped.zarr"
     _write_like_disscube(store, data, ("x", "y"), "uso")
 
-    # confirma que o shape em disco é IGUAL ao esperado (é exatamente
-    # isso que torna o bug silencioso sem a correção de eixo)
+    # confirm the on-disk shape EQUALS the expected one (exactly what
+    # makes the bug silent without the axis fix)
     root = zarr.open(str(store), mode="r")
-    assert root["uso"].shape == data.shape, "pré-condição do teste: shapes devem coincidir"
+    assert root["uso"].shape == data.shape, "test precondition: shapes must match"
 
     ws = MemmapRasterWorkspace.create(
         root=tmp_path / "workspace", shape=(n, n),
@@ -83,24 +84,24 @@ def test_load_zarr_handles_xy_axis_order_square_array(tmp_path):
     )
     load_zarr_into_workspace(ws, str(store), variable_map={"uso": "uso"})
 
-    resultado = ws.snapshot("uso")
-    assert np.array_equal(resultado, data), (
-        "load_zarr_into_workspace leu o array com linha/coluna trocadas -- "
-        "regressão do bug de ordem de eixos (x,y) vs (y,x)"
+    result = ws.snapshot("uso")
+    assert np.array_equal(result, data), (
+        "load_zarr_into_workspace read the array with rows/columns swapped -- "
+        "regression of the (x,y) vs (y,x) axis-order bug"
     )
 
 
 def test_load_zarr_handles_txy_axis_order_temporal(tmp_path):
-    """Variável temporal (3D) com ordem de eixos não-canônica: (x, y, time)
-    em vez de (time, y, x)."""
+    """Temporal (3-D) variable with a non-canonical axis order: (x, y, time)
+    instead of (time, y, x)."""
     n = 5
     n_time = 3
-    # (time, y, x) -- valores originais
-    serie = np.arange(n_time * n * n).reshape(n_time, n, n).astype("int16")
-    # grava fisicamente em ordem (x, y, time)
-    raw_disco = np.transpose(serie, (2, 1, 0))  # de (time,y,x) para (x,y,time)
+    # (time, y, x) -- original values
+    series = np.arange(n_time * n * n).reshape(n_time, n, n).astype("int16")
+    # physically written in (x, y, time) order
+    raw_on_disk = np.transpose(series, (2, 1, 0))  # from (time,y,x) to (x,y,time)
 
-    da = xr.DataArray(raw_disco, dims=("x", "y", "time"), name="mangue")
+    da = xr.DataArray(raw_on_disk, dims=("x", "y", "time"), name="mangue")
     store = tmp_path / "temporal.zarr"
     da.to_dataset(name="mangue").to_zarr(str(store), mode="w", consolidated=False)
 
@@ -110,15 +111,15 @@ def test_load_zarr_handles_txy_axis_order_temporal(tmp_path):
     )
     load_zarr_into_workspace(ws, str(store), variable_map={"mangue": "mangue"}, time_index=1)
 
-    assert np.array_equal(ws.snapshot("mangue"), serie[1])
+    assert np.array_equal(ws.snapshot("mangue"), series[1])
 
 
 def test_load_zarr_handles_xy_axis_order_zarr_v2_format(tmp_path):
-    """Store no FORMATO Zarr v2 (ex.: gravado por xarray/disscube mais
-    antigos, ou com zarr_format=2): não existe metadata.dimension_names,
-    o xarray guarda os nomes no atributo `_ARRAY_DIMENSIONS`. Mesmo
-    lendo com zarr-python 3, sem o fallback para esse atributo o array
-    quadrado (x, y) era carregado TRANSPOSTO, silenciosamente."""
+    """A store in Zarr v2 FORMAT (e.g. written by older xarray/disscube,
+    or with zarr_format=2): there is no metadata.dimension_names; xarray
+    keeps the names in the `_ARRAY_DIMENSIONS` attribute. Even when read
+    with zarr-python 3, without the fallback to that attribute the square
+    (x, y) array was loaded TRANSPOSED, silently."""
     n = 6
     data = np.arange(n * n).reshape(n, n).astype("int16")
     store = tmp_path / "v2.zarr"
@@ -132,6 +133,6 @@ def test_load_zarr_handles_xy_axis_order_zarr_v2_format(tmp_path):
     load_zarr_into_workspace(ws, str(store), variable_map={"uso": "uso"})
 
     assert np.array_equal(ws.snapshot("uso"), data), (
-        "Zarr formato v2 com eixos (x, y) carregado transposto -- "
-        "fallback para _ARRAY_DIMENSIONS ausente"
+        "Zarr v2-format store with (x, y) axes loaded transposed -- "
+        "missing fallback to _ARRAY_DIMENSIONS"
     )

@@ -1,22 +1,19 @@
 """
-Prova de equivalência para examples/gol_patterns/gol_patterns_haloexec.py:
-padrões clássicos de Game of Life (glider, blinker, beacon, toad,
-block, pulsar), posicionados deliberadamente sobre fronteiras de
-bloco, devem produzir resultado IDÊNTICO entre a execução monolítica
-(RasterCellularAutomaton puro) e em blocos+halo
-(HaloChunkedRasterCellularAutomaton).
+Equivalence proof for examples/gol/gol_patterns_haloexec.py: classic
+Game of Life patterns (glider, blinker, beacon, toad, block, pulsar),
+deliberately placed over block boundaries, must produce an IDENTICAL
+result between the monolithic run (plain RasterCellularAutomaton) and
+the blocks+halo run (HaloChunkedRasterCellularAutomaton).
 
-Isso é o que de fato sustenta a alegação do exemplo ("um padrão que
-atravessa a borda de um bloco e continua se comportando como deveria
-é a evidência visual mais direta de que o halo sincroniza
-corretamente") -- rodar sem erro não prova isso; só a comparação
-célula a célula prova.
+This is what actually backs the example's claim ("a pattern that crosses
+a block edge and keeps behaving as it should is the most direct visual
+evidence that the halo synchronizes correctly") -- running without
+error does not prove it; only the cell-by-cell comparison does.
 
-Achado ao escrever este teste: as coordenadas originais do exemplo
-tinham beacon (9,25, 4x4) caindo inteiro dentro da área do pulsar
-(4,20, 13x13) -- sobreposição silenciosa, já que a função place()
-sobrescreve por atribuição direta. Corrigido movendo beacon para a
-coluna 33.
+Found while writing this test: the example's original coordinates put
+the beacon (9,25, 4x4) entirely inside the pulsar's area (4,20, 13x13)
+-- a silent overlap, since place() overwrites by direct assignment.
+Fixed by moving the beacon to column 33.
 """
 
 import numpy as np
@@ -34,8 +31,8 @@ from haloexec import HaloChunkedRasterCellularAutomaton
 ROWS, COLS = 40, 40
 GENERATIONS = 16
 
-# mesmas posições do exemplo, já corrigidas (ver docstring acima)
-POSICOES = {
+# same positions as the example, already fixed (see the docstring above)
+POSITIONS = {
     "glider":  (8, 8),
     "blinker": (20, 5),
     "beacon":  (9, 33),
@@ -51,25 +48,25 @@ def _place(grid: np.ndarray, pattern: list[list[int]], top: int, left: int) -> N
     grid[top:top + h, left:left + w] = arr
 
 
-def _grade_inicial() -> np.ndarray:
+def _initial_grid() -> np.ndarray:
     grid = np.zeros((ROWS, COLS), dtype=np.int8)
-    for nome, (top, left) in POSICOES.items():
-        _place(grid, PATTERNS[nome], top, left)
+    for name, (top, left) in POSITIONS.items():
+        _place(grid, PATTERNS[name], top, left)
     return grid
 
 
-def test_nenhum_padrao_se_sobrepoe():
-    """Confirma que as posições não colidem entre si -- se colidissem,
-    place() sobrescreveria um padrão sobre o outro silenciosamente,
-    sem erro nenhum (foi exatamente o bug encontrado com o beacon
-    original em (9,25), antes da correção)."""
-    ocupacao = np.zeros((ROWS, COLS), dtype=int)
-    for nome, (top, left) in POSICOES.items():
-        arr = np.array(PATTERNS[nome])
+def test_no_pattern_overlaps():
+    """Confirm the positions do not collide -- if they did, place() would
+    silently write one pattern over another, with no error at all
+    (exactly the bug found with the original beacon at (9,25), before
+    the fix)."""
+    occupancy = np.zeros((ROWS, COLS), dtype=int)
+    for name, (top, left) in POSITIONS.items():
+        arr = np.array(PATTERNS[name])
         h, w = arr.shape
-        regiao = ocupacao[top:top + h, left:left + w]
-        assert regiao.sum() == 0, f"{nome} em ({top},{left}) colide com outro padrão já posicionado"
-        ocupacao[top:top + h, left:left + w] += 1
+        region = occupancy[top:top + h, left:left + w]
+        assert region.sum() == 0, f"{name} at ({top},{left}) collides with a pattern already placed"
+        occupancy[top:top + h, left:left + w] += 1
 
 
 class _GameOfLifeRuleMixin:
@@ -92,13 +89,13 @@ class _GoLHalo(_GameOfLifeRuleMixin, HaloChunkedRasterCellularAutomaton):
 @pytest.mark.parametrize(
     "block_h, block_w, halo, label",
     [
-        (10, 10, 1, "bloco_10x10_mesmo_do_exemplo"),
-        (7, 13, 1, "bloco_irregular_nao_alinhado_aos_padroes"),
-        (5, 5, 2, "bloco_pequeno_halo_maior"),
+        (10, 10, 1, "block_10x10_same_as_example"),
+        (7, 13, 1, "irregular_block_not_aligned_to_patterns"),
+        (5, 5, 2, "small_block_larger_halo"),
     ],
 )
-def test_padroes_classicos_equivalencia(block_h, block_w, halo, label):
-    grid0 = _grade_inicial()
+def test_classic_patterns_equivalence(block_h, block_w, halo, label):
+    grid0 = _initial_grid()
 
     backend_mono = raster_grid(rows=ROWS, cols=COLS, attrs={"state": grid0.copy()})
     env_mono = Environment(start_time=0, end_time=GENERATIONS)
@@ -110,7 +107,7 @@ def test_padroes_classicos_equivalencia(block_h, block_w, halo, label):
     env_halo = Environment(start_time=0, end_time=GENERATIONS)
     _GoLHalo(backend=backend_halo, block_h=block_h, block_w=block_w, halo=halo, state_attr="state")
     env_halo.run()
-    resultado = backend_halo.arrays["state"].copy()
+    result = backend_halo.arrays["state"].copy()
 
-    n_diff = int(np.sum(golden != resultado))
-    assert n_diff == 0, f"[{label}] {n_diff}/{ROWS*COLS} células divergentes"
+    n_diff = int(np.sum(golden != result))
+    assert n_diff == 0, f"[{label}] {n_diff}/{ROWS*COLS} cells differ"
